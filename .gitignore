@@ -1,1 +1,28 @@
 /.docs
+
+# Simulation artifacts
+/work
+/modelsim.ini
+/transcript
+*.vcd
+*.wlf
+vsim.wlf
+
+# Logs and output directories
+/logs
+/coverage
+/out_*
+*.log
+
+# Build artifacts
+/build
+
+# Local files
+/current_state.txt
+
+# Generated assembly tests from riscv-dv
+/uvm_env/riscv-dv/asm_test
+
+# Python cache
+__pycache__/
+*.pyc
