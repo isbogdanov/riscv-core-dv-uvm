@@ -1,0 +1,1 @@
+/home/bogdanov/altera/24.1std/questa_fse/linux_x86_64/VisualizerRls/bin/viscom -nolock -quiet -jmem_size 94322976 +acc -o smoke_top -work work tb_top +__betafsm

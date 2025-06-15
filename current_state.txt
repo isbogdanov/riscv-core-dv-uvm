@@ -1,0 +1,985 @@
+./uvm_env/cpu_formal_if.sv
+---
+// This interface contains formal properties (assertions) for the cpu_top module.
+// It is bound to the DUT instance to provide non-intrusive checking.
+
+`include "uvm_macros.svh"
+
+interface cpu_formal_if (
+    input logic clock,
+    input logic rst,
+    input logic [31:0] current_PC,
+    input logic reg_write_o,
+    input logic [4:0] rd_o
+);
+    import uvm_pkg::*;
+
+    // The Program Counter (PC) must always be 4-byte aligned.
+    pc_aligned_check: assert property (
+        @(posedge clock) disable iff (rst) (current_PC[1:0] == 2'b00)
+    ) else `uvm_error("PC_ALIGN_FAIL", "Program Counter is not 4-byte aligned");
+
+    // RISC-V register x0 is hardwired to zero and must never be a write target.
+    x0_zero_check: assert property (
+        @(posedge clock) disable iff (rst) !(reg_write_o && (rd_o == 5'b0))
+    ) else `uvm_error("X0_WRITE_FAIL", "An instruction attempted to write to the zero register (x0)");
+
+endinterface 
+
+---
+./uvm_env/cpu_top.sv
+---
+// Wrapper for the RISC-V processor core, adding formal properties
+// and preparing it for integration into a larger test environment.
+
+`include "uvm_macros.svh"
+
+module cpu_top(
+    input clock,
+    input rst,
+    input [31:0] instruction,
+    output [31:0] current_PC, 
+    
+    output mem_read,
+    output mem_write,
+    output [3:0]  address,
+    
+    output [31:0] mem_write_data, 
+    input [31:0] mem_read_data
+);
+
+    wire reg_write_o;
+    wire [4:0] rd_o;
+
+    processor processor_inst (
+        .clock(clock),
+        .rst(rst),
+        .instruction(instruction),
+        .current_PC(current_PC),
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .address(address),
+        .mem_write_data(mem_write_data),
+        .mem_read_data(mem_read_data),
+        .reg_write(reg_write_o),
+        .rd(rd_o)
+    );
+
+endmodule 
+
+---
+./uvm_env/tb_top.sv
+---
+`timescale 1ns / 1ps
+`include "uvm_macros.svh"
+
+// This is the main UVM testbench top module. It instantiates the DUT
+// and the interface that connects it to the UVM verification components.
+module tb_top;
+
+    import uvm_pkg::*;
+
+    // Simple clock and reset logic
+    logic clock;
+    logic rst;
+
+    // DUT signals
+    wire [31:0] instruction;
+    wire [31:0] current_PC;
+    wire  mem_read;
+    wire  mem_write;
+    wire [3:0]  address;
+    wire [31:0] mem_write_data;
+    wire [31:0] mem_read_data;
+    wire  reg_write_o;
+    wire [4:0]  rd_o;
+
+    initial begin
+        clock = 0;
+        forever #5 clock = ~clock;
+    end
+
+    initial begin
+        rst = 1;
+        repeat(5) @(posedge clock);
+        rst = 0;
+        #1000;
+        $finish;
+    end
+
+    // DUT instantiation
+    cpu_top dut (
+        .clock(clock),
+        .rst(rst),
+        .instruction(instruction),
+        .current_PC(current_PC),
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .address(address),
+        .mem_write_data(mem_write_data),
+        .mem_read_data(mem_read_data)
+    );
+
+    // Bind the formal interface to the DUT instance's internal signals
+    bind cpu_top cpu_formal_if formal_if_inst (
+        .clock(clock),
+        .rst(rst),
+        .current_PC(current_PC),
+        .reg_write_o(dut.reg_write_o),
+        .rd_o(dut.rd_o)
+    );
+
+endmodule
+
+
+---
+./Makefile
+---
+# Makefile for the AMD-DV-Sprint project
+
+# --- Variables ---
+QUESTA_HOME = /home/bogdanov/altera/24.1std/questa_fse
+VSIM = $(QUESTA_HOME)/bin/vsim
+
+# Set C/C++ compilers for Questa to use system's toolchain
+export CC = /usr/bin/gcc
+export CXX = /usr/bin/g++
+
+# Phony targets don't represent files
+.PHONY: all compile elaborate smoke clean
+
+# --- Targets ---
+
+# Default target
+all: smoke
+
+# Compile the design and testbench
+compile:
+	@echo "--- Compiling all source files ---"
+	@$(VSIM) -c -do "do questa/scripts/compile.do"
+
+# Elaborate the design
+elaborate: compile
+	@echo "--- Elaborating the design ---"
+	@$(VSIM) -c -do "vopt +acc -o smoke_top -work work tb_top; quit"
+
+# Run a simple smoke test to ensure the environment is set up correctly
+smoke: elaborate
+	@echo "--- Running smoke test ---"
+	@$(VSIM) -c smoke_top -do "run -all; quit"
+
+# Clean up simulation files
+clean:
+	@echo "--- Cleaning up ---"
+	@rm -rf work/ transcript vsim.wlf smoke_top* 
+
+---
+./rtl/ALU.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module ALU(
+    input wire [2:0] opcode,
+    input wire [31:0] operand_1,
+    input wire [31:0] operand_2,
+    output wire [31:0] ALU_result,
+    output zero,
+    input rst
+    
+    );
+
+    parameter ADD=3'b001, SUB=3'b010, AND=3'b011, OR=3'b100, SLL=3'b101, SRL=3'b110;
+
+    assign ALU_result = rst ? 0 : ((opcode == ADD )? operand_1 + operand_2 : 
+                        ((opcode == SUB)? operand_1 - operand_2 : 
+                        ((opcode == AND)? operand_1 && operand_2 :
+                        ((opcode == OR)? operand_1 || operand_2 : 
+                        ((opcode == SLL) ? operand_1 << operand_2 : 
+                        ((opcode == SRL)? operand_1 >> operand_2 : 0 ))))));
+      
+    assign zero = (ALU_result==0)? 1:0;                     
+    
+endmodule
+
+	
+
+
+---
+./rtl/ALU_controller.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module ALU_controller(
+    input wire [3:0] opcode,
+    input wire [1:0] ALU_op,
+    output [2:0] ALU_opcode
+    );
+
+    parameter ADD=4'b0000, SUB=4'b1000, AND=4'b0111, OR=4'b0110, SLL=4'b0001, SRL=4'b0101;
+
+    assign ALU_opcode = (((opcode == ADD)&&(ALU_op!=2'b01) )|| (ALU_op==2'b00) )? 3'b001 : 
+                        (((opcode == SUB) || (ALU_op==2'b01))? 3'b010 : 
+                        ((opcode == AND)? 3'b011 :
+                        ((opcode == OR)?  3'b100 : 
+                        ((opcode == SLL)? 3'b101 : 
+                        ((opcode == SRL)? 3'b110 : 3'b000 )))));
+   
+endmodule
+
+
+---
+./rtl/CPU_controller.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module CPU_controller(input [6:0]opcode,
+                       output wire branch,
+                       output wire mem_read,
+                       output wire mem_to_reg,
+                       output wire [1:0] ALU_op,
+                       output wire  mem_write,
+                       output wire ALU_src,
+                       output wire  register_write,
+                       output wire get_counter
+
+    );
+
+assign branch = (opcode[6])? 1:0;
+assign mem_read = (opcode == 7'b0000011)? 1:0;
+assign mem_to_reg = (opcode == 7'b0000011)? 1:0;
+
+assign ALU_op = (opcode == 7'b0110011 || opcode == 7'b0010011)? 2'b10 : 
+                (((opcode == 7'b1100011)||(opcode==7'b1101111))? 2'b01 : 2'b00);
+
+assign mem_write = (opcode == 7'b0100011)? 1:0;
+assign ALU_src = ((opcode == 7'b0010011)||(opcode == 7'b0100011)||(opcode == 7'b0000011))? 1:0;
+assign register_write = ((opcode==7'b1100011)||(opcode==7'b0100011))?0:1;
+
+assign get_counter =  (opcode == 7'b1101111)? 1:0; 
+  
+    
+endmodule
+
+
+---
+./rtl/adder.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module adder(
+    input [31:0] inA,
+    input [31:0] inB,
+    output wire [31:0] out
+    );
+    
+    assign out = inA + inB;
+           
+endmodule
+
+
+---
+./rtl/data_memory.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module data_memory(
+    input wire mem_read,
+    input wire mem_write,
+    input wire [3:0] address,
+    input wire [31:0] write_data,   
+    output [31:0] read_data,
+    input wire clk,
+    input wire rst
+   );
+    
+    reg [31:0] memory [9:0];
+    
+    assign read_data = (mem_read) ? memory[address]: 0 ;
+    
+    always @(posedge clk or posedge rst)
+         if (rst) begin
+            memory[0] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[1] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[2] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[3] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[4] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[5] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[6] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[7] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[8] <= 32'b0_000_00000000_00000000_00000000_0000;
+            memory[9] <= 32'b0_000_00000000_00000000_00000000_0000;
+           
+        end
+        else if (mem_write) memory[address] <= write_data; 
+    
+endmodule
+
+
+---
+./rtl/imm_gen.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module imm_gen(
+    
+    input wire [31:0] instruction, 
+    
+    output wire [31:0] IMM_value
+
+    );
+    
+    
+    wire [6:0] opcode;
+    assign opcode = instruction[6:0];
+    
+    wire [31:0] jtype_imm;
+    wire [31:0] stype_imm;
+    wire [31:0] itype_imm;
+    wire [31:0] btype_imm;
+    assign itype_imm = {{20{instruction[31]}},instruction[31:20]};
+    assign jtype_imm = {{12{1'b0}},instruction[31],instruction[19:12],instruction[20],instruction[30:21]};
+    assign stype_imm = {{20{1'b0}},instruction[31:25],instruction[11:7]};
+    assign btype_imm = {{20{1'b0}},instruction[31],instruction[7],instruction[30:25],instruction[11:8]};
+    
+    parameter J=7'b1101111, I1=7'b0000011, I2=7'b0010011,  S=7'b0100011, B=7'b1100011;
+    
+    
+    assign IMM_value =  (opcode == J)? itype_imm : 
+                        (((opcode == I1)||(opcode == I2))? itype_imm : 
+                        ((opcode == S)? stype_imm : 
+                        ((opcode == B)? btype_imm*2 : 0)));
+
+    
+endmodule
+
+
+---
+./rtl/instruction_memory.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module instruction_memory(
+    input [31:0] address,
+    output [31:0] instruction 
+    );
+    
+   reg [31:0] RAM [64:0];
+     
+    assign instruction = RAM[address];
+    // loading contents from file on disk
+    initial $readmemb ("RAM_data.txt",RAM,0,30); 
+endmodule
+
+
+---
+./rtl/multiplexor.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module multiplexor(
+    input control,
+    input [31:0] inA,
+    input [31:0] inB,
+    output wire [31:0] out
+
+    );
+    
+   assign out = (control) ? inB: inA;
+    
+endmodule
+
+
+---
+./rtl/processor.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module processor(
+    input clock,
+    input rst,
+    input [31:0] instruction,
+    output [31:0] current_PC, 
+    
+    output mem_read,
+    output mem_write,
+    output [3:0]  address,
+    
+    output [31:0] mem_write_data, 
+    input [31:0] mem_read_data,
+    
+    // Verification outputs
+    output reg_write,
+    output [4:0] rd
+    
+    );
+    
+    
+                           
+    wire branch;
+    wire [1:0] ALU_op;
+   
+    wire [31:0] from_increment_adder;
+    wire [31:0] from_branch_adder;
+    
+    wire [31:0] next_PC;
+    wire PC_src_control;
+    wire ALU_zero;
+    
+    wire ALU_src;
+      
+    wire [31:0] PC_increment = (rst)? 0 : 1;
+    
+    wire mem_to_reg;
+  
+     
+    wire [31:0] from_ALU;
+    wire [31:0] to_REG_WRITE_DATA;
+    
+    assign address = from_ALU[3:0];
+  
+    assign PC_src_control = branch && ALU_zero;
+    
+    CPU_controller CPU_control (.opcode(instruction[6:0]),
+                                 .branch(branch),
+                                 .mem_read(mem_read),
+                                 .mem_to_reg(mem_to_reg),
+                                 .ALU_op(ALU_op),
+                                 .mem_write(mem_write),
+                                 .ALU_src(ALU_src),
+                                 .register_write(reg_write),
+                                 .get_counter(get_counter)
+                                    ); 
+    
+    program_counter PC (.next_PC(next_PC), .current_PC(current_PC), .clk(clock), .rst(rst));
+    
+    // updatin PC counter
+    multiplexor PC_value(.control(PC_src_control),
+                         .inA(from_increment_adder), 
+                         .inB(from_branch_adder),
+                         .out(next_PC));
+      
+    adder increment_adder(.inA(PC_increment),
+                          .inB(current_PC),
+                          .out(from_increment_adder)
+                          );
+    
+  
+    wire [31:0] operand_2;
+    wire [31:0] rs2_value;
+    
+    wire [31:0] IMM_value;
+    // deciding on ALU input
+    multiplexor ALU_operand_2 (.control(ALU_src),
+                           .inA(rs2_value), 
+                           .inB(IMM_value),
+                           .out(operand_2)
+                           );
+    
+
+    
+    
+    multiplexor REG_WRITE_DATA_input (.control(mem_to_reg),
+                                      .inA(from_ALU),
+                                      .inB(mem_read_data),
+                                      .out(to_REG_WRITE_DATA));
+   
+    
+   wire [4:0] rs1;
+   assign rs1 =  instruction[19:15];
+   
+   wire [4:0] rs2;
+   assign rs2 =  instruction[24:20];
+   
+   assign rd =  instruction[11:7];
+   
+   wire [6:0] opcode;
+   assign opcode = instruction[6:0];
+   
+   wire [31:0] rs1_value;
+   
+   register_file RF (.rs1(rs1),
+                     .rs2(rs2),
+                     .rd(rd),
+                     .rd_value(to_REG_WRITE_DATA),
+                     .register_write(reg_write),    
+                     .rs1_value(rs1_value),
+                     .rs2_value(rs2_value),
+                     .get_counter(get_counter),
+                     .current_PC(current_PC),
+                     .clk(clock), .rst(rst));
+    
+   assign mem_write_data = rs2_value;
+
+    adder branch_adder(.inA(current_PC),
+                        .inB(IMM_value),
+                        .out(from_branch_adder)
+                        //.overflow(overflow)
+                        );
+      
+   
+    imm_gen IMM (.instruction(instruction), .IMM_value(IMM_value));
+    
+    
+    
+    wire [2:0] ALU_opcode;
+    
+    ALU ALU_instance (.opcode(ALU_opcode),
+                      .operand_1(rs1_value),
+                      .operand_2(operand_2),
+                      .ALU_result(from_ALU),
+                       .zero(ALU_zero),
+                       .rst(rst));    
+
+    wire subtraction_valid = (instruction[30]==1&& instruction[5]==1)? 1:0;
+    wire [3:0] ALU_controller_opcode;
+    assign ALU_controller_opcode = {subtraction_valid, instruction[14:12]};                                
+    
+    ALU_controller ALU_control (.opcode(ALU_controller_opcode),
+                                .ALU_op(ALU_op),
+                                .ALU_opcode(ALU_opcode)
+                                   );
+
+endmodule
+
+
+---
+./rtl/program_counter.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module program_counter(
+
+    input [31:0] next_PC,
+    output [31:0] current_PC,
+    input clk,
+    input rst
+   );
+    
+    reg [31:0] inst_address = 0;
+    
+    assign current_PC = inst_address;
+        
+    always @(posedge clk or posedge rst)
+       if (rst) begin 
+            inst_address <= 0; 
+       end
+       else begin
+            inst_address <= next_PC;
+       end;
+       
+endmodule
+
+
+---
+./rtl/register_file.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module register_file(
+    input wire [4:0] rs1,
+    input wire [4:0] rs2,
+    input wire [4:0] rd,
+    input wire [31:0] rd_value,
+    
+    input register_write,    
+    
+    output [31:0] rs1_value,
+    output [31:0] rs2_value,
+    input  wire clk,
+    input wire rst,
+    input get_counter,
+    input [31:0] current_PC
+   
+    );
+    
+    reg [31:0] registers [20:0];
+    
+   
+    assign rs1_value = registers[rs1];
+    assign rs2_value = registers[rs2];
+    
+    always @(posedge clk or posedge rst) 
+        if (rst) begin
+            registers[0] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[1] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[2] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[3] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[4] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[5] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[6] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[7] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[8] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[9] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[10] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[11] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[12] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[13] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[14] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[15] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[16] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[17] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[18] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[19] <= 32'b0_000_00000000_00000000_00000000_0000;
+            registers[20] <= 32'b0_000_00000000_00000000_00000000_0000;
+                              
+        end
+        else if (register_write && (rst == 0)) begin
+            if (get_counter) begin 
+                registers[rd] <= current_PC+1;
+            end
+            else begin  
+                registers[rd] <= rd_value;
+            end 
+        end
+endmodule
+
+
+---
+./original_simulation/RAM_data.txt
+---
+00000110010000001000000010010011
+00000000000000001010000100000011
+00000000000100001010000110000011
+00000000001100010000001000110011
+00000001111000100000001010010011
+01000000010000101000001100110011
+00000110011000111000001110010011
+00000000000000111010010000000011
+00000000000100111010010010000011
+00000000100101000111010100110011
+00000000100101000110010110110011
+00000110100001100000011000010011
+00000000000001100010011010000011
+00000000000101100010011100000011
+00000000110101110001011110110011
+00000000001101110001100000010011
+00000000110101110101011110110011
+00000000001101110101100000010011
+00000001000001111000010001100011
+00000000110000000000011111101111
+00000110101010001000100010010011
+00000000011010001000100010010011
+00000000010110001010000000100011
+00000000011010001010000010100011
+00000000101010001010000100100011
+00000000101110001010000110100011
+00000000111110001010001000100011
+00000001000010001010001010100011
+
+
+---
+./original_simulation/RAM_data_hex_v9.txt
+---
+0x00208093
+0x0020086F
+0x00208093
+0x00208093
+0x00110113
+0x00318193
+0x00310233
+0x00220293
+0x40428333
+0x00230313
+0x00608163
+0x00110393
+0x00138393
+0x007474B3
+0x0074E533
+0x00238393
+0x007515B3
+0x00551613
+0x402383B3
+0x007656B3
+0x0036D713
+0x0057A023
+0x0097A0A3
+0x00A7A123
+0x00C7A1A3
+0x00E7A223
+0x0007A083
+0x00138393
+0x00138393
+0x00138393
+
+
+---
+./original_simulation/processor_tb.v
+---
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Carleton University  
+// Student: Igor Bogdanov 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module processor_tb;
+        
+    reg clk;
+    reg rst;
+    
+    wire [31:0] current_PC;
+    wire [31:0] instruction;
+    
+    wire mem_read;
+    wire mem_write;
+    wire [3:0] mem_address;
+   wire [31:0] mem_read_data;
+    wire [31:0] mem_write_data;
+    
+
+instruction_memory DUT1 (.address(current_PC), .instruction(instruction));
+
+data_memory DUT2 (.mem_read(mem_read),
+                     .mem_write(mem_write),
+                     .address(mem_address), 
+                     .write_data(mem_write_data), 
+                     .read_data(mem_read_data),
+                     .clk(clk ),
+                     .rst(rst));
+
+processor DUT3 (
+    .clock(clk),
+    .rst(rst),
+    .instruction(instruction),
+    .current_PC(current_PC),
+    .mem_read(mem_read),
+    .mem_write(mem_write),
+    .address(mem_address),
+     .mem_write_data(mem_write_data), 
+    .mem_read_data(mem_read_data)
+);
+   
+initial
+begin
+    
+    clk = 0;
+    rst = 1;
+    @(posedge clk);
+    rst = 0;
+    #8;
+end
+
+always clk = #16 ~clk;
+
+    
+endmodule
+
+
+---
+./original_simulation/ram.txt
+---
+010
+010
+101
+101
+
+
+---
+./.docs/tier_A_updated.md
+---
+## **Tier A “Must-Have” Guide — One-Stop, End-to-End Playbook**
+
+Everything below fits on a single page in your tracker.
+Hit every check-box and AMD will see: **UVM ✔ | Coverage ✔ | Formal ✔ | Debug ✔ | Automation ✔ | Planning ✔**.
+
+---
+
+### 0 · Repository Skeleton (create first — 15 min)
+
+```
+amd-dv-sprint/
+├─ uvm_env/                 cpu_top.sv • tb_pkg.sv • demo_seq.sv
+├─ coverage/                merged.ucdb • html/
+├─ formal_proof/            pc_x0.sby • pc_x0.log
+├─ bug_story/               BUG.md • before.png • after.png
+├─ scripts/                 merge_cov.py • gen_seeds.py
+├─ docs/                    verification_plan.pdf
+├─ ci/                      (optional) GitHub Action
+├─ Makefile                 compile • smoke • regress • cov • formal • bug
+└─ README.md
+```
+
+---
+
+### 1 · UVM / riscv-dv Regression — `uvm_env/run.log`
+
+| Target           | Details & Tips                                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**    | 20 constrained-random tests pass, 0 errors.                                                                                                                                                 |
+| **Steps**        | ① Write `cpu_top.sv` wrapper + 2 SVAs. ② Add riscv-dv as sub-module. ③ `make smoke` → clean compile. ④ Generate seeds (`gen_seeds.py 20`). ⑤ `make regress` (parallel 4). ⑥ Save `run.log`. |
+| **Success line** | `REPORT: pass = 20, fail = 0`                                                                                                                                                               |
+
+⏱ **Hands-on:** 2 h (incl. wrapper).
+📦 **Commit:** `uvm_env/ cpu_top.sv run.log seeds.txt`
+
+---
+
+### 2 · Functional Coverage ≥ 60 % — `coverage/…`
+
+| Target            | Details & Tips                                                                                                                                                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**     | Show coverage-driven flow.                                                                                                                                                                                                    |
+| **Steps**         | ① Compile with `-coverage all +acc`. ② After regression: `vcover merge coverage/merged.ucdb questa/runs/*/*.ucdb`. ③ HTML report: `vcover report -html -details -output coverage/html …`. ④ `merge_cov.py` → `coverage.json`. |
+| **Coverage.json** | Must contain `"functional": 0.60` or higher.                                                                                                                                                                                  |
+
+⏱ **Hands-on:** 1 h (post-sim).
+📦 **Commit:** `coverage/* scripts/merge_cov.py`
+
+---
+
+### 3 · Formal Proof PASS — `formal_proof/pc_x0.*`
+
+| Target           | Details & Tips                                                                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**    | Prove 2 safety properties to depth 20 with SymbiYosys.                                                                                                                        |
+| **Steps**        | ① Put `pc_aligned` & `x0_zero` properties in `formal_bind.sv` (or in wrapper). ② Create `pc_x0.sby` (`mode prove`, `depth 20`). ③ Run `sby -f pc_x0.sby`. ④ Copy `pc_x0.log`. |
+| **Success line** | `STATUS: PASSED`                                                                                                                                                              |
+
+⏱ **Hands-on:** 45 min.
+📦 **Commit:** `formal_proof/*.sby *.log`
+
+---
+
+### 4 · Bug-Injection Story — `bug_story/`
+
+| Target           | Details & Tips                                                                                                                                                                                                   |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**    | Demonstrate debug/root-cause workflow.                                                                                                                                                                           |
+| **Injected bug** | Disable EX-stage bypass mux.                                                                                                                                                                                     |
+| **Steps**        | ① Branch *inject\_bug*. ② Break mux, run one seed → FAIL, capture `before.png`. ③ Fix, rerun same seed → PASS, capture `after.png`. ④ Write `BUG.md` (trigger • symptom • root cause • fix SHA). ⑤ Merge branch. |
+
+⏱ **Hands-on:** 2 h.
+📦 **Commit:** `bug_story/*`
+
+---
+
+### 5 · Automation Script — `scripts/merge_cov.py`
+
+| Requirement | Notes                                          |
+| ----------- | ---------------------------------------------- |
+| ≤ 20 LOC    | `argparse + subprocess + regex`; outputs JSON. |
+| Self-doc    | `--help` prints usage.                         |==-
+| Lint        | Pass `ruff`.                                   |
+
+⏱ **Hands-on:** 1 h.
+
+---
+
+### 6 · Verification Plan — `docs/verification_plan.pdf` (≤ 2 pages)
+
+| Section (bullet) | Must include                                    |
+| ---------------- | ----------------------------------------------- |
+| Scope/Context    | RV32I single-cycle core.                        |
+| Interfaces       | IMEM, DMEM, clk/rst, CSR.                       |
+| Test Strategy    | riscv-dv + directed CSR + 20-seed list.         |
+| Coverage Goals   | 100 % ISA, 90 % branch/line, ≥ 60 % functional. |
+| Formal Props     | pc\_aligned, x0\_zero (depth 20).               |
+| Traceability     | Req → test / coverpoint / property.             |
+| Exit Criteria    | Tests pass, coverage met, formal pass.          |
+
+⏱ **Hands-on:** 3 h draft + 0.5 h polish.
+
+---
+ 
+
+```make
+compile : ; vsim -c -do questa/scripts/compile.do
+smoke   : compile ; vsim -c -do "do questa/scripts/run_seed.do 12345 rv32i_smoke_test"
+regress : compile ; ./scripts/run_regression.sh $(SEED_LIST)
+cov     : ; python scripts/merge_cov.py coverage/merged.ucdb -o coverage/coverage.json
+formal  : ; sby -f formal_proof/pc_x0.sby
+bug     : ; ./scripts/replay_bug.sh $(SEED)
+```
+
+*(Optional)* add a GitHub Action to run `make smoke` on push.
+
+---
+
+### 40-Hour Sprint Clock
+
+| Day     | Hrs | Milestones                                                                          |
+| ------- | --- | ----------------------------------------------------------------------------------- |
+| **Fri** | 4   | Repo + `cpu_top.sv` + smoke compile.                                                |
+|         | 4   | UVM regression seeds ready.                                                         |
+| **Sat** | 6   | 20-seed regress + coverage merge.                                                   |
+|         | 2   | Bug injected, waves captured.                                                       |
+| **Sun** | 3   | Formal proof PASS.                                                                  |
+|         | 4   | Draft verification\_plan.pdf.                                                       |
+|         | 1   | README badges, cleanup.                                                             |
+| **Mon** | 5   | Fresh-clone dry run → `make all`; polish; push public repo; send application email. |
+
+---
+
+### Final “Definition-of-Done” Checklist
+
+* [ ] **run.log** shows `pass = 20` `fail = 0`
+* [ ] **coverage.json** `"functional" ≥ 0.60`
+* [ ] **pc\_x0.log** ends `STATUS: PASSED`
+* [ ] **BUG.md** + before/after PNGs present
+* [ ] **merge\_cov.py** runs & lints clean
+* [ ] **verification\_plan.pdf** ≤ 2 pages with traceability
+
+Tick every box—Tier A is complete and portfolio-ready.
+
+
+---

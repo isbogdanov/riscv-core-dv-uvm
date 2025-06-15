@@ -20,8 +20,8 @@ module ALU(
 
     assign ALU_result = rst ? 0 : ((opcode == ADD )? operand_1 + operand_2 : 
                         ((opcode == SUB)? operand_1 - operand_2 : 
-                        ((opcode == AND)? operand_1 && operand_2 :
-                        ((opcode == OR)? operand_1 || operand_2 : 
+                        ((opcode == AND)? operand_1 & operand_2 :
+                        ((opcode == OR)? operand_1 | operand_2 : 
                         ((opcode == SLL) ? operand_1 << operand_2 : 
                         ((opcode == SRL)? operand_1 >> operand_2 : 0 ))))));
       

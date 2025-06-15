@@ -1,0 +1,4 @@
+BEGIN 1:cpu_top:fast:work
+    rd_o :  1:cpu_top:fast:work
+    reg_write_o :  1:cpu_top:fast:work
+END 
