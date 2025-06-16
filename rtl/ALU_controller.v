@@ -6,18 +6,51 @@
 
 
 module ALU_controller(
-    input wire [3:0] opcode,
+    input wire [2:0] funct3,
+    input wire [6:0] funct7,
     input wire [1:0] ALU_op,
-    output [2:0] ALU_opcode
+    output reg [2:0] ALU_opcode
     );
 
-    parameter ADD=4'b0000, SUB=4'b1000, AND=4'b0111, OR=4'b0110, SLL=4'b0001, SRL=4'b0101;
+    // Internal ALU operation codes
+    parameter ALU_ADD = 3'b001;
+    parameter ALU_SUB = 3'b010;
+    parameter ALU_AND = 3'b011;
+    parameter ALU_OR  = 3'b100;
+    parameter ALU_SLL = 3'b101;
+    parameter ALU_SRL = 3'b110;
+    parameter ALU_XOR = 3'b111; // Example: Add XOR if needed
+    parameter ALU_SLT = 3'b000; // Example: Add SLT if needed
 
-    assign ALU_opcode = (((opcode == ADD)&&(ALU_op!=2'b01) )|| (ALU_op==2'b00) )? 3'b001 : 
-                        (((opcode == SUB) || (ALU_op==2'b01))? 3'b010 : 
-                        ((opcode == AND)? 3'b011 :
-                        ((opcode == OR)?  3'b100 : 
-                        ((opcode == SLL)? 3'b101 : 
-                        ((opcode == SRL)? 3'b110 : 3'b000 )))));
-   
+    always @* begin
+        case (ALU_op)
+            // R-type or I-type (immediate arithmetic)
+            2'b10: begin
+                case (funct3)
+                    3'b000: // ADD or SUB
+                        if (funct7 == 7'b0100000) ALU_opcode = ALU_SUB;
+                        else ALU_opcode = ALU_ADD;
+                    3'b111: // AND
+                        ALU_opcode = ALU_AND;
+                    3'b110: // OR
+                        ALU_opcode = ALU_OR;
+                    3'b001: // SLL
+                        ALU_opcode = ALU_SLL;
+                    3'b101: // SRL or SRA
+                        // Note: For simplicity, we only implement SRL. SRA requires more logic.
+                        ALU_opcode = ALU_SRL;
+                    default: ALU_opcode = 3'b000; // Default to no-op
+                endcase
+            end
+            // Branch (BEQ, BNE etc.) -> Needs subtraction for comparison
+            2'b01: begin
+                ALU_opcode = ALU_SUB;
+            end
+            // Load/Store/JALR -> Needs addition for address calculation
+            2'b00: begin
+                ALU_opcode = ALU_ADD;
+            end
+            default: ALU_opcode = 3'b000; // Default to no-op
+        endcase
+    end
 endmodule

@@ -14,11 +14,13 @@ module cpu_top(
     output [3:0]  address,
     
     output [31:0] mem_write_data, 
-    input [31:0] mem_read_data
-);
+    input [31:0] mem_read_data,
 
-    wire reg_write_o;
-    wire [4:0] rd_o;
+    // Expose verification signals
+    output wire reg_write_o,
+    output wire [4:0] rd_o,
+    output [31:0] rf_rd_value_o
+);
 
     processor processor_inst (
         .clock(clock),
@@ -31,7 +33,8 @@ module cpu_top(
         .mem_write_data(mem_write_data),
         .mem_read_data(mem_read_data),
         .reg_write(reg_write_o),
-        .rd(rd_o)
+        .rd(rd_o),
+        .to_REG_WRITE_DATA(rf_rd_value_o)
     );
 
 endmodule 

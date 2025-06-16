@@ -13,24 +13,25 @@ module processor(
     
     output mem_read,
     output mem_write,
-    output [3:0]  address,
+    output [31:0]  address,
     
     output [31:0] mem_write_data, 
     input [31:0] mem_read_data,
     
     // Verification outputs
     output reg_write,
-    output [4:0] rd
+    output [4:0] rd,
+    output reg [31:0] to_REG_WRITE_DATA
     
     );
     
-    
-                           
     wire branch;
     wire [1:0] ALU_op;
     wire jump;
     wire jalr_select;
     wire [1:0] writeback_src;
+    wire csr_read;
+    wire alu_src1_is_pc;
    
     wire [31:0] from_increment_adder;
     wire [31:0] from_branch_adder;
@@ -43,13 +44,13 @@ module processor(
     wire [31:0] IMM_value;
     wire [31:0] rs1_value;
     wire [31:0] rs2_value;
+    wire [31:0] csr_read_data;
       
-    wire [31:0] PC_increment = (rst)? 0 : 4;
+    wire [31:0] PC_increment = 4;
     
     wire [31:0] from_ALU;
-    wire [31:0] to_REG_WRITE_DATA;
     
-    assign address = from_ALU[3:0];
+    assign address = from_ALU;
   
     assign PC_src_control = (branch && ALU_zero) || jump;
     
@@ -62,7 +63,9 @@ module processor(
                                  .register_write(reg_write),
                                  .writeback_src(writeback_src),
                                  .jump(jump),
-                                 .jalr_select(jalr_select)
+                                 .jalr_select(jalr_select),
+                                 .csr_read(csr_read),
+                                 .alu_src1_is_pc(alu_src1_is_pc)
                                     ); 
     
     program_counter PC (.next_PC(next_PC), .current_PC(current_PC), .clk(clock), .rst(rst));
@@ -81,10 +84,10 @@ module processor(
                         .out(from_branch_adder)
                         );
       
-    // For JALR, the target address is calculated by adding the sign-extended I-immediate
-    // to the register rs1, and setting the LSB of the result to 0.
-    // For all other jumps (JAL) and branches, the calculated address is used as-is.
-    assign next_PC_branch_src = jalr_select ? {from_branch_adder[31:1], 1'b0} : from_branch_adder;
+    // The calculated branch/jump address may not be 4-byte aligned.
+    // For this processor, all instructions must be 4-byte aligned, so
+    // we force the two LSBs of the next PC to zero for all branches and jumps.
+    assign next_PC_branch_src = {from_branch_adder[31:2], 2'b00};
 
     multiplexor PC_value(.control(PC_src_control),
                          .inA(from_increment_adder), 
@@ -106,15 +109,25 @@ module processor(
                            .out(operand_2)
                            );
     
-    wire [31:0] wb_mux_out_1;
-    multiplexor WB_MUX1 (.control(writeback_src[0]),
-                         .inA(from_ALU),
-                         .inB(mem_read_data),
-                         .out(wb_mux_out_1));
-    multiplexor WB_MUX2 (.control(writeback_src[1]),
-                         .inA(wb_mux_out_1),
-                         .inB(from_increment_adder),
-                         .out(to_REG_WRITE_DATA));
+    wire [31:0] alu_op1;
+    multiplexor alu_op1_mux (
+        .control(alu_src1_is_pc),
+        .inA(rs1_value),
+        .inB(current_PC),
+        .out(alu_op1)
+    );
+    
+    // This mux selects the final value to be written back to the register file.
+    // It is controlled by the writeback_src signal from the CPU controller.
+    always @* begin
+        case (writeback_src)
+            2'b00:  to_REG_WRITE_DATA = from_ALU;           // Result from ALU
+            2'b01:  to_REG_WRITE_DATA = mem_read_data;      // Data from memory
+            2'b10:  to_REG_WRITE_DATA = from_increment_adder; // PC+4 for JAL/JALR
+            2'b11:  to_REG_WRITE_DATA = csr_read ? csr_read_data : IMM_value; // CSR data or Immediate
+            default: to_REG_WRITE_DATA = 32'hdeadbeef;     // Should not happen
+        endcase
+    end
 
    
    wire [4:0] rs1;
@@ -128,6 +141,10 @@ module processor(
    wire [6:0] opcode;
    assign opcode = instruction[6:0];
    
+   wire get_counter_wire = 0;
+   
+   wire [11:0] csr_addr = instruction[31:20];
+   
    register_file RF (.rs1(rs1),
                      .rs2(rs2),
                      .rd(rd),
@@ -135,7 +152,13 @@ module processor(
                      .register_write(reg_write),    
                      .rs1_value(rs1_value),
                      .rs2_value(rs2_value),
-                     .clk(clock), .rst(rst));
+                     .clk(clock), 
+                     .rst(rst),
+                     .get_counter(get_counter_wire),
+                     .current_PC(current_PC),
+                     .csr_read(csr_read),
+                     .csr_addr(csr_addr),
+                     .csr_read_data(csr_read_data));
     
    assign mem_write_data = rs2_value;
 
@@ -146,17 +169,17 @@ module processor(
     wire [2:0] ALU_opcode;
     
     ALU ALU_instance (.opcode(ALU_opcode),
-                      .operand_1(rs1_value),
+                      .operand_1(alu_op1),
                       .operand_2(operand_2),
                       .ALU_result(from_ALU),
                        .zero(ALU_zero),
                        .rst(rst));    
 
-    wire subtraction_valid = (instruction[30]==1&& instruction[5]==1)? 1:0;
-    wire [3:0] ALU_controller_opcode;
-    assign ALU_controller_opcode = {subtraction_valid, instruction[14:12]};                                
-    
-    ALU_controller ALU_control (.opcode(ALU_controller_opcode),
+    wire [2:0] funct3 = instruction[14:12];
+    wire [6:0] funct7 = instruction[31:25];
+
+    ALU_controller ALU_control (.funct3(funct3),
+                                .funct7(funct7),
                                 .ALU_op(ALU_op),
                                 .ALU_opcode(ALU_opcode)
                                    );

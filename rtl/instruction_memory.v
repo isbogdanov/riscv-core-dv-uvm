@@ -10,20 +10,17 @@ module instruction_memory(
     output [31:0] instruction 
     );
     
-   reg [31:0] RAM [127:0];
+   reg [31:0] RAM [5242879:0];
    integer i;
      
-    assign instruction = RAM[address[31:2]];
+    wire [31:0] physical_address = address - 32'h80000000;
+    assign instruction = RAM[physical_address[31:2]];
 
-    // Initialize the entire memory to 0 to prevent executing 'x'
-    // if the PC runs past the end of the loaded program.
+    // Initialize the entire memory to 0. The testbench is responsible for loading a program.
     initial begin
-        for (i=0; i<128; i=i+1) begin
-            RAM[i] <= 32'b0;
+        for (i=0; i<5242880; i=i+1) begin
+            RAM[i] = 32'b0;
         end
     end
 
-    // loading contents from file on disk. The end address '27' is inclusive,
-    // so this loads 28 instructions into addresses 0 through 27.
-    initial $readmemb ("RAM_data.txt",RAM,0,27); 
 endmodule

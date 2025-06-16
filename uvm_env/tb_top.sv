@@ -16,11 +16,14 @@ module tb_top;
     wire [31:0] current_PC;
     wire  mem_read;
     wire  mem_write;
-    wire [3:0]  address;
+    wire [31:0]  address;
     wire [31:0] mem_write_data;
     wire [31:0] mem_read_data;
     wire  reg_write_o;
     wire [4:0]  rd_o;
+    wire [31:0] rf_rd_value_o;
+
+    integer trace_file;
 
     // Instantiate the memories
     instruction_memory instr_mem (
@@ -39,6 +42,23 @@ module tb_top;
     );
 
     initial begin
+        string elf_file;
+        string trace_log;
+        string ram_init_file;
+
+        // Get ELF file and trace log path from simulator arguments
+        if ($value$plusargs("ram_init_file=%s", ram_init_file)) begin
+            $display("[TB] Loading RAM init file: %s", ram_init_file);
+            $readmemb(ram_init_file, instr_mem.RAM);
+        end
+
+        if ($value$plusargs("trace_log=%s", trace_log)) begin
+            $display("[TB] Opening trace log for writing: %s", trace_log);
+            trace_file = $fopen(trace_log, "w");
+        end else begin
+            trace_file = $fopen("rtl_trace.log", "w");
+        end
+
         // Enable waveform dumping for debug using standard Verilog commands
         $dumpfile("waves.vcd");
         $dumpvars(0, tb_top);
@@ -51,9 +71,10 @@ module tb_top;
 
     initial begin
         rst = 1;
-        repeat(5) @(posedge clock);
+        @(posedge clock);
         rst = 0;
-        #1000;
+        #40000; // Increased simulation time for longer tests
+        $fclose(trace_file);
         $finish;
     end
 
@@ -67,16 +88,35 @@ module tb_top;
         .mem_write(mem_write),
         .address(address),
         .mem_write_data(mem_write_data),
-        .mem_read_data(mem_read_data)
+        .mem_read_data(mem_read_data),
+        .reg_write_o(reg_write_o),
+        .rd_o(rd_o),
+        .rf_rd_value_o(rf_rd_value_o)
     );
+
+    // This block will write the trace of retired instructions to the log file
+    // This must match the format of the Spike log for comparison.
+    always @(posedge clock) begin
+        if (!rst) begin
+            if (reg_write_o) begin
+                // Log instructions that have a GPR write
+                $fdisplay(trace_file, "core   0: 0x%08h (0x%08h) x%02d 0x%08h",
+                          current_PC, instruction, rd_o, rf_rd_value_o);
+            end else begin
+                // Log instructions that do not write to a GPR (branches, stores, etc.)
+                $fdisplay(trace_file, "core   0: 0x%08h (0x%08h)",
+                          current_PC, instruction);
+            end
+        end
+    end
 
     // Bind the formal interface to the DUT instance's internal signals
     bind cpu_top cpu_formal_if formal_if_inst (
         .clock(clock),
         .rst(rst),
         .current_PC(current_PC),
-        .reg_write_o(dut.reg_write_o),
-        .rd_o(dut.rd_o)
+        .reg_write_o(reg_write_o),
+        .rd_o(rd_o)
     );
 
-endmodule
+endmodule 
