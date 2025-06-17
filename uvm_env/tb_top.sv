@@ -50,7 +50,7 @@ module tb_top;
         if ($value$plusargs("ram_init_file=%s", ram_init_file)) begin
             $display("[TB] Loading RAM init file: %s", ram_init_file);
             $readmemb(ram_init_file, instr_mem.RAM);
-        end
+        end 
 
         if ($value$plusargs("trace_log=%s", trace_log)) begin
             $display("[TB] Opening trace log for writing: %s", trace_log);
