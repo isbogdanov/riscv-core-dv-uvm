@@ -26,3 +26,5 @@ vsim.wlf
 # Python cache
 __pycache__/
 *.pyc
+
+seeds.txt

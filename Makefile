@@ -27,7 +27,7 @@ gen:
 	@echo "--- Generating tests and Spike reference log ---"
 	@python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE)
 	@chmod +x scripts/run_regression.sh
-	@./scripts/run_regression.sh --steps gen $$(cat $(SEED_FILE))
+	@./scripts/run_regression.sh $$(cat $(SEED_FILE))
 
 # Manually compile the generated assembly files into ELFs
 compile_asm:
@@ -40,13 +40,14 @@ compile_asm:
 	@./scripts/compile_assembly.sh
 
 # Run the reference Spike simulation to generate the golden trace log
-spike_sim:
+spike_sim: compile_asm
 	@echo "--- Running Spike reference simulation ---"
 	@if [ ! -f $(SEED_FILE) ]; then \
 		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
 		exit 1; \
 	fi
-	@./scripts/run_regression.sh --steps iss_sim $$(cat $(SEED_FILE))
+	@chmod +x scripts/run_spike.sh
+	@./scripts/run_spike.sh $$(cat $(SEED_FILE))
 
 # Simulate previously generated tests and compare results
 sim:

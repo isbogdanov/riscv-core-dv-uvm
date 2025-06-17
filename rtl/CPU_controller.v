@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Carleton University  
-// Student: Igor Bogdanov 
+// Author: Igor Bogdanov 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -13,7 +12,7 @@ module CPU_controller(input [6:0]opcode,
                        output wire  mem_write,
                        output wire ALU_src,
                        output wire  register_write,
-                       output wire [1:0] writeback_src,
+                       output reg [1:0] writeback_src,
                        output wire jump,
                        output wire jalr_select,
                        output wire csr_read,
@@ -28,14 +27,17 @@ assign branch = (opcode == 7'b1100011) ? 1:0;
 assign mem_read = (opcode == 7'b0000011)? 1:0;
 
 // The writeback_src signal determines what data is written back to the register file.
-// 2'b00: The result from the ALU (R-type, I-type arithmetic)
-// 2'b01: Data loaded from memory (LW)
-// 2'b10: The return address (PC+4) for JAL/JALR instructions
-// 2'b11: From Immediate (LUI) or CSR read data
-assign writeback_src = (opcode == 7'b0000011) ? 2'b01 :                          // LW
-                       (opcode == 7'b1101111 || opcode == 7'b1100111) ? 2'b10 :  // JAL, JALR
-                       (opcode == 7'b0110111 || opcode == 7'b1110011) ? 2'b11 :  // LUI, CSR
-                       2'b00;                                                    // Default to ALU result (AUIPC now falls here)
+// Using a case statement for clarity and to ensure correct priority.
+always @* begin
+    case (opcode)
+        7'b0000011: writeback_src = 2'b01; // LW
+        7'b1101111: writeback_src = 2'b10; // JAL
+        7'b1100111: writeback_src = 2'b10; // JALR
+        7'b0110111: writeback_src = 2'b11; // LUI
+        7'b1110011: writeback_src = 2'b11; // SYSTEM/CSR
+        default:    writeback_src = 2'b00; // R-type, I-type, AUIPC
+    endcase
+end
 
 assign ALU_op = (opcode == 7'b0110011 || opcode == 7'b0010011) ? 2'b10 :
                 (opcode == 7'b1100011) ? 2'b01 :
@@ -43,7 +45,15 @@ assign ALU_op = (opcode == 7'b0110011 || opcode == 7'b0010011) ? 2'b10 :
 
 assign mem_write = (opcode == 7'b0100011)? 1:0;
 assign ALU_src = (opcode == 7'b0110011 || opcode == 7'b1100011) ? 0 : 1;
-// A register write is performed for all instructions except stores and branches.
-assign register_write = (opcode != 7'b0100011 && opcode != 7'b1100011);
+
+// A register write is performed for R, I, U, J, and SYSTEM types.
+// It is NOT performed for stores and branches.
+wire is_r_type = (opcode == 7'b0110011);
+wire is_i_type = (opcode == 7'b0010011) || (opcode == 7'b0000011) || (opcode == 7'b1100111);
+wire is_u_type = (opcode == 7'b0110111) || (opcode == 7'b0010111);
+wire is_j_type = (opcode == 7'b1101111);
+wire is_csr_type = (opcode == 7'b1110011);
+
+assign register_write = is_r_type || is_i_type || is_u_type || is_j_type || is_csr_type;
 
 endmodule

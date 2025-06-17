@@ -15,14 +15,14 @@ CC="${RISCV_PREFIX}-gcc"
 
 # Compiler flags must match the target architecture.
 # The 'zicsr' extension is required for the CSR instructions used in the test harness.
-ISA="rv32imc_zicsr"
+ISA="rv32im_zicsr"
 ABI="ilp32"
 # The compiler needs two include paths:
 # 1. The core riscv-dv environment for standard headers.
 # 2. The user_extension directory for project-specific headers.
 INCLUDES="-Iuvm_env/riscv-dv/src -Iuvm_env/riscv-dv/user_extension"
 # These flags create a baremetal ELF file suitable for simulation.
-CFLAGS="-march=${ISA} -mabi=${ABI} ${INCLUDES} -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles"
+CFLAGS="-march=${ISA} -mabi=${ABI} ${INCLUDES} -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -mno-relax"
 
 # --- Script Body ---
 echo "--- Compiling assembly tests to ELF files ---"
@@ -41,7 +41,7 @@ if [ ! -d "$ASM_DIR" ]; then
 fi
 
 # Find the linker script provided by riscv-dv for this target.
-LINKER_SCRIPT="uvm_env/riscv-dv/target/amd_sprint/link.ld"
+LINKER_SCRIPT="uvm_env/riscv-dv/target/amd_sprint_no_c/link.ld"
 if [ ! -f "$LINKER_SCRIPT" ]; then
     echo "Error: Linker script not found at ${LINKER_SCRIPT}"
     exit 1

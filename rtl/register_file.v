@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Carleton University  
-// Student: Igor Bogdanov 
+// Author: Igor Bogdanov 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -30,8 +29,8 @@ module register_file(
     reg [31:0] registers [31:0];
     integer i;
     
-    // --- CSR Implementation (Read-Only) ---
-    // For this project, we only need to support reading mhartid (Core ID)
+    // --- CSR Implementation (Read-Only) for Spike comparison ---
+    // For this project, we only need to support reading mhartid
     parameter CSR_MHARTID = 12'hF14;
     reg [31:0] mhartid = 0; // Hart ID is 0
 

@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Carleton University  
-// Student: Igor Bogdanov 
+// Author: Igor Bogdanov 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -19,8 +18,8 @@ module ALU_controller(
     parameter ALU_OR  = 3'b100;
     parameter ALU_SLL = 3'b101;
     parameter ALU_SRL = 3'b110;
-    parameter ALU_XOR = 3'b111; // Example: Add XOR if needed
-    parameter ALU_SLT = 3'b000; // Example: Add SLT if needed
+    parameter ALU_XOR = 3'b111; 
+    parameter ALU_SLT = 3'b000; 
 
     always @* begin
         case (ALU_op)
@@ -36,8 +35,7 @@ module ALU_controller(
                         ALU_opcode = ALU_OR;
                     3'b001: // SLL
                         ALU_opcode = ALU_SLL;
-                    3'b101: // SRL or SRA
-                        // Note: For simplicity, we only implement SRL. SRA requires more logic.
+                    3'b101: // SRL Note: For simplicity, only SRL. SRA requires more logic.
                         ALU_opcode = ALU_SRL;
                     default: ALU_opcode = 3'b000; // Default to no-op
                 endcase
