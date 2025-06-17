@@ -15,6 +15,9 @@ LOG_DIR   ?= logs
 SEED_FILE ?= $(LOG_DIR)/seeds.txt
 RUN_LOG   ?= $(LOG_DIR)/run.log
 
+# PRESERVE_SEEDS: Set to 1 to skip seed generation and log directory cleaning
+PRESERVE_SEEDS ?=
+
 # --- Main Targets ---
 
 # Default target
@@ -30,7 +33,7 @@ regress: clean elaborate gen compile_asm spike_sim sim
 gen:
 	@echo "--- Generating tests and Spike reference log ---"
 	@mkdir -p $(LOG_DIR)
-	#@python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE)
+	@if [ -z "$(PRESERVE_SEEDS)" ]; then python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE); fi
 	@chmod +x scripts/run_regression.sh
 	@./scripts/run_regression.sh $$(cat $(SEED_FILE))
 
@@ -99,5 +102,5 @@ debug_ram: clean elaborate
 clean:
 	@echo "--- Cleaning up ---"
 	@rm -rf work/ transcript vsim.wlf smoke_top* out_* 
-	#@rm -rf $(LOG_DIR)
+	@if [ -z "$(PRESERVE_SEEDS)" ]; then rm -rf $(LOG_DIR); fi
 	@rm -rf /tmp/$(USER)_dpi_* 

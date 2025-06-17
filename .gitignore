@@ -12,7 +12,8 @@ vsim.wlf
 /logs
 /coverage
 /out_*
-*.log
+!/logs/run.log
+
 
 # Build artifacts
 /build
