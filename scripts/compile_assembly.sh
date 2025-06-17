@@ -41,7 +41,7 @@ if [ ! -d "$ASM_DIR" ]; then
 fi
 
 # Find the linker script provided by riscv-dv for this target.
-LINKER_SCRIPT="uvm_env/riscv-dv/target/amd_sprint_no_c/link.ld"
+LINKER_SCRIPT="uvm_env/custom_target/rv32im/link.ld"
 if [ ! -f "$LINKER_SCRIPT" ]; then
     echo "Error: Linker script not found at ${LINKER_SCRIPT}"
     exit 1

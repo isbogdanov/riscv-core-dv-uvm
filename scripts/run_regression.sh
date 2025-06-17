@@ -24,8 +24,8 @@ RISCV_DV_RUN="uvm_env/riscv-dv/run.py"
 # Path to the python generator source, which needs to be in the PYTHONPATH
 PYGEN_SRC_PATH="$ROOT_DIR/uvm_env/riscv-dv/pygen"
 
-# The YAML file that lists available tests
-TESTLIST="uvm_env/riscv-dv/yaml/base_testlist.yaml"
+# The YAML file that lists available tests is now resolved by run.py
+# from the custom target directory.
 
 # Path to our custom ISS configuration which tells the tool how to run our RTL
 ISS_YAML="uvm_env/riscv-dv/target/amd_sprint_no_c/iss.yaml"
@@ -46,8 +46,8 @@ for seed in "${SEEDS[@]}"; do
     # Run the generator step of the flow
     python3 "$RISCV_DV_RUN" \
         --test "$TEST_NAME" \
-        --testlist "$TESTLIST" \
-        --target amd_sprint_no_c \
+        --custom_target uvm_env/custom_target/rv32im \
+        --target rv32im \
         --isa rv32im \
         --simulator "pyflow" \
         --steps gen \

@@ -26,6 +26,8 @@ regress: clean elaborate gen compile_asm spike_sim sim
 gen:
 	@echo "--- Generating tests and Spike reference log ---"
 	@python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE)
+	@mkdir -p uvm_env/riscv-dv/pygen/pygen_src/target
+	@cd uvm_env/riscv-dv/pygen/pygen_src/target && ln -sf ../../../../custom_target/rv32im .
 	@chmod +x scripts/run_regression.sh
 	@./scripts/run_regression.sh $$(cat $(SEED_FILE))
 
@@ -94,3 +96,4 @@ debug_ram: clean elaborate
 clean:
 	@echo "--- Cleaning up ---"
 	@rm -rf work/ transcript vsim.wlf smoke_top* out_* $(SEED_FILE) *.log 
+	@rm -f uvm_env/riscv-dv/pygen/pygen_src/target/rv32im 
