@@ -16,9 +16,11 @@ module CPU_controller(input [6:0]opcode,
                        output wire jump,
                        output wire jalr_select,
                        output wire csr_read,
-                       output wire alu_src1_is_pc
+                       output wire alu_src1_is_pc,
+                       output wire alu_src1_is_zero
     );
 
+assign alu_src1_is_zero = (opcode == 7'b0110111); // Assert only for LUI
 assign alu_src1_is_pc = (opcode == 7'b0010111); // Assert only for AUIPC
 assign csr_read = (opcode == 7'b1110011); // SYSTEM instructions (incl. CSRRW, CSRRS, etc.)
 assign jalr_select = (opcode == 7'b1100111) ? 1:0;
@@ -33,9 +35,8 @@ always @* begin
         7'b0000011: writeback_src = 2'b01; // LW
         7'b1101111: writeback_src = 2'b10; // JAL
         7'b1100111: writeback_src = 2'b10; // JALR
-        7'b0110111: writeback_src = 2'b11; // LUI
         7'b1110011: writeback_src = 2'b11; // SYSTEM/CSR
-        default:    writeback_src = 2'b00; // R-type, I-type, AUIPC
+        default:    writeback_src = 2'b00; // R-type, I-type, LUI, AUIPC
     endcase
 end
 

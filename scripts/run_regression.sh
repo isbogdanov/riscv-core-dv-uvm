@@ -46,9 +46,8 @@ for seed in "${SEEDS[@]}"; do
     # Run the generator step of the flow
     python3 "$RISCV_DV_RUN" \
         --test "$TEST_NAME" \
-        --custom_target uvm_env/custom_target/rv32im \
-        --target rv32im \
-        --isa rv32im \
+        --target rv32i \
+        --isa rv32i \
         --simulator "pyflow" \
         --steps gen \
         --iterations 1 \

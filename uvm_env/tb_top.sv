@@ -94,19 +94,34 @@ module tb_top;
         .rf_rd_value_o(rf_rd_value_o)
     );
 
-    // This block will write the trace of retired instructions to the log file
-    // This must match the format of the Spike log for comparison.
+    // This block will write the trace of retired instructions to the log file.
+    // The format must be IDENTICAL to the Spike log for the CSV converter to work.
     always @(posedge clock) begin
         if (!rst) begin
             if (reg_write_o) begin
-                // Log instructions that have a GPR write
-                $fdisplay(trace_file, "core   0: 0x%08h (0x%08h) x%02d 0x%08h",
+                // Format for instructions with a GPR write (matches Spike's --log-commits)
+                // The key is having "x%0d" with no space to match Spike's format.
+                $fdisplay(trace_file, "core   0: 3 0x%08h (0x%08h) x%0d 0x%08h",
                           current_PC, instruction, rd_o, rf_rd_value_o);
             end else begin
-                // Log instructions that do not write to a GPR (branches, stores, etc.)
+                // Format for instructions without a GPR write (branches, stores, etc.)
                 $fdisplay(trace_file, "core   0: 0x%08h (0x%08h)",
                           current_PC, instruction);
             end
+        end
+    end
+
+    // Add a separate always block to detect ECALL and terminate the simulation.
+    // This is the correct way to end a compliance test.
+    always @(posedge clock) begin
+        if (!rst && instruction == 32'h00000073) begin
+            // Log the ecall to ensure it's captured before finishing
+            $fdisplay(trace_file, "core   0: 3 0x%08h (0x%08h)",
+                      current_PC, instruction);
+            $display("ECALL instruction detected at PC=0x%h. Finishing simulation.", current_PC);
+            #10; // Allow time for the message to be written
+            $fclose(trace_file);
+            $finish;
         end
     end
 

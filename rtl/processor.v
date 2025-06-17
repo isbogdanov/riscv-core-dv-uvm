@@ -31,6 +31,7 @@ module processor(
     wire [1:0] writeback_src;
     wire csr_read;
     wire alu_src1_is_pc;
+    wire alu_src1_is_zero;
    
     wire [31:0] from_increment_adder;
     wire [31:0] from_branch_adder;
@@ -64,7 +65,8 @@ module processor(
                                  .jump(jump),
                                  .jalr_select(jalr_select),
                                  .csr_read(csr_read),
-                                 .alu_src1_is_pc(alu_src1_is_pc)
+                                 .alu_src1_is_pc(alu_src1_is_pc),
+                                 .alu_src1_is_zero(alu_src1_is_zero)
                                     ); 
     
     program_counter PC (.next_PC(next_PC), .current_PC(current_PC), .clk(clock), .rst(rst));
@@ -86,7 +88,8 @@ module processor(
     // The calculated branch/jump address may not be 4-byte aligned.
     // For this processor, all instructions must be 4-byte aligned, so
     // we force the two LSBs of the next PC to zero for all branches and jumps.
-    assign next_PC_branch_src = {from_branch_adder[31:2], 2'b00};
+    // Using a bitwise AND for a more robust implementation.
+    assign next_PC_branch_src = from_branch_adder & 32'hFFFFFFFC;
 
     multiplexor PC_value(.control(PC_src_control),
                          .inA(from_increment_adder), 
@@ -108,13 +111,19 @@ module processor(
                            .out(operand_2)
                            );
     
-    wire [31:0] alu_op1;
-    multiplexor alu_op1_mux (
-        .control(alu_src1_is_pc),
-        .inA(rs1_value),
-        .inB(current_PC),
-        .out(alu_op1)
-    );
+    reg [31:0] alu_op1;
+    // This mux selects the first operand for the ALU.
+    // It handles the special cases for AUIPC (which uses the PC)
+    // and LUI (which uses 0).
+    always @* begin
+        if (alu_src1_is_pc) begin
+            alu_op1 = current_PC;
+        end else if (alu_src1_is_zero) begin
+            alu_op1 = 32'b0;
+        end else begin
+            alu_op1 = rs1_value;
+        end
+    end
     
     // This mux selects the final value to be written back to the register file.
     // It is controlled by the writeback_src signal from the CPU controller.
@@ -165,7 +174,7 @@ module processor(
     
     
     
-    wire [2:0] ALU_opcode;
+    wire [3:0] ALU_opcode;
     
     ALU ALU_instance (.opcode(ALU_opcode),
                       .operand_1(alu_op1),

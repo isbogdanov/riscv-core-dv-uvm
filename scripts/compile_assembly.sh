@@ -15,7 +15,7 @@ CC="${RISCV_PREFIX}-gcc"
 
 # Compiler flags must match the target architecture.
 # The 'zicsr' extension is required for the CSR instructions used in the test harness.
-ISA="rv32im_zicsr"
+ISA="rv32i_zicsr"
 ABI="ilp32"
 # The compiler needs two include paths:
 # 1. The core riscv-dv environment for standard headers.
@@ -40,8 +40,9 @@ if [ ! -d "$ASM_DIR" ]; then
     exit 1
 fi
 
-# Find the linker script provided by riscv-dv for this target.
-LINKER_SCRIPT="uvm_env/custom_target/rv32im/link.ld"
+# Find the linker script. We use the standard rv32i generator target, but
+# provide our own custom linker script for the compilation step.
+LINKER_SCRIPT="uvm_env/custom_target/rv32i/link.ld"
 if [ ! -f "$LINKER_SCRIPT" ]; then
     echo "Error: Linker script not found at ${LINKER_SCRIPT}"
     exit 1

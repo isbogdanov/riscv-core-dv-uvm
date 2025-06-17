@@ -37,6 +37,6 @@ echo "--- Running Spike on ${ELF_FILE} ---"
 # The '-l' flag enables logging of retired instructions.
 # The '--log-commits' flag adds GPR write data to the log.
 # We must redirect stderr to stdout because Spike writes its log to stderr.
-spike -m0x80000000:0x20000 --isa=rv32im -l --log-commits "$ELF_FILE" > "$SPIKE_LOG_FILE" 2>&1
+spike -m0x80000000:0x20000 --isa=rv32i -l --log-commits "$ELF_FILE" > "$SPIKE_LOG_FILE" 2>&1
 
 echo "--- Spike simulation complete. Log at ${SPIKE_LOG_FILE} ---" 

@@ -11,7 +11,9 @@ export CC = /usr/bin/gcc
 export CXX = /usr/bin/g++
 
 NUM_SEEDS ?= 1
-SEED_FILE ?= seeds.txt
+LOG_DIR   ?= logs
+SEED_FILE ?= $(LOG_DIR)/seeds.txt
+RUN_LOG   ?= $(LOG_DIR)/run.log
 
 # --- Main Targets ---
 
@@ -20,14 +22,15 @@ all: regress
 
 # Run a full, clean regression. This is the main entry point.
 regress: clean elaborate gen compile_asm spike_sim sim
+#regress: compile gen compile_asm spike_sim sim
+
 	@echo "--- Regression Complete ---"
 
 # Generate assembly tests and the golden spike log
 gen:
 	@echo "--- Generating tests and Spike reference log ---"
-	@python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE)
-	@mkdir -p uvm_env/riscv-dv/pygen/pygen_src/target
-	@cd uvm_env/riscv-dv/pygen/pygen_src/target && ln -sf ../../../../custom_target/rv32im .
+	@mkdir -p $(LOG_DIR)
+	#@python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE)
 	@chmod +x scripts/run_regression.sh
 	@./scripts/run_regression.sh $$(cat $(SEED_FILE))
 
@@ -59,7 +62,7 @@ sim:
 		exit 1; \
 	fi
 	@chmod +x scripts/run_simulation.sh
-	@./scripts/run_simulation.sh $$(cat $(SEED_FILE)) | tee run.log
+	@./scripts/run_simulation.sh $$(cat $(SEED_FILE)) | tee $(RUN_LOG)
 
 # --- Build Prerequisite Targets ---
 
@@ -95,5 +98,6 @@ debug_ram: clean elaborate
 # Clean up simulation files
 clean:
 	@echo "--- Cleaning up ---"
-	@rm -rf work/ transcript vsim.wlf smoke_top* out_* $(SEED_FILE) *.log 
-	@rm -f uvm_env/riscv-dv/pygen/pygen_src/target/rv32im 
+	@rm -rf work/ transcript vsim.wlf smoke_top* out_* 
+	#@rm -rf $(LOG_DIR)
+	@rm -rf /tmp/$(USER)_dpi_* 
