@@ -1,0 +1,26 @@
+name: riscv-core-dv-uvm
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.23        
+  - pip
+  - pandas=2.2
+  - tabulate
+  - pip:
+      - bitarray==3.4.2
+      - bitstring==4.3.1
+      - docutils==0.21.2
+      - einops==0.8.1
+      - files-to-prompt==0.6
+      - importlib-metadata==8.7.0
+      - pallets-sphinx-themes==2.3.0
+      - pyboolector==3.2.4.20240823.1
+      - python-jsonschema-objects==0.5.7
+      - pyucis==0.1.4.13484508590
+      - pyvsc==0.9.4.15369697742
+      - reportlab==4.4.1
+      - rst2pdf==0.103.1
+      - sympy==1.13.1
+      - toposort==1.10
+      - zipp==3.23.0

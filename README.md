@@ -57,12 +57,21 @@ Before running any simulations, you must install the necessary tools and set up 
 
 ### Environment Setup
 
-1.  **Clone the repository:**
+1.  **Clone the repository and initialize submodules:**
     ```bash
-    git clone <your-repo-url>
-    cd amd-dv-sprint
+    git clone git@github.com:isbogdanov/riscv-core-dv-uvm.git
+    cd riscv-core-dv-uvm
+    git submodule update --init --recursive
     ```
-2.  **Create your environment file:** Copy the example file to `.env`. The Makefile will automatically load it. Edit `.env` to match your local paths if they differ from the defaults.
+
+2.  **Create and activate the conda environment:**
+    ```bash
+    conda install -n base mamba
+    mamba env create -f environment.yml
+    conda activate riscv-core-dv-uvm
+    ```
+
+3.  **Create your environment file:** Copy the example file to `.env`. The Makefile will automatically load it. Edit `.env` to match your local paths if they differ from the defaults.
     ```bash
     cp env.example .env
     ```
