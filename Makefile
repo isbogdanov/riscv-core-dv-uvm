@@ -168,10 +168,41 @@ formal:
 	@cd $(FORMAL_DIR) && sby -f pc_x0.sby | tee pc_x0.log
 	@echo "Formal verification complete. Check $(FORMAL_LOG) for results."
 
-# Replay a specific bug scenario for demonstration
+# Automated demonstration of RISC-V ADDI bug discovery and fix
 bug:
-	@echo "--- Running bug replay scenario ---"
-	@mkdir -p $(BUG_DIR)
-	@echo "Replaying test with seed $(BUG_SEED) for bug analysis..."
-	@python3 scripts/run_simulation.py $(BUG_SEED) > $(BUG_DIR)/bug_replay.log 2>&1 || true
-	@echo "Bug replay complete. Check $(BUG_DIR)/ for analysis files." 
+	@echo "--- Automated RISC-V ADDI Bug Demonstration ---"
+	@echo "Demonstrating real bug discovered in ALU_controller.v"
+	@echo ""
+	
+	@# Start with completely clean state
+	@echo "Cleaning workspace for demonstration..."
+	@make clean
+	
+	@# Save current state
+	@echo "Saving current git state..."
+	@git stash push -m "Temporary stash for automated bug demo" || true
+	@CURRENT_BRANCH=$$(git branch --show-current); \
+	\
+	echo ""; \
+	echo "1. Running BUGGY version (branch: bug_demo_addi_controller)..."; \
+	git checkout bug_demo_addi_controller; \
+	mkdir -p logs; \
+	echo "695998" > logs/seeds.txt; \
+	echo "   Testing ADDI with large immediate - expecting FAILURE..."; \
+	echo ""; \
+	PRESERVE_SEEDS=1 make regress || echo "   ✓ Bug reproduced - ADDI fails as expected"; \
+	\
+	echo ""; \
+	echo "2. Running FIXED version (branch: $$CURRENT_BRANCH)..."; \
+	git checkout $$CURRENT_BRANCH; \
+	git stash pop || true; \
+	make clean; \
+	mkdir -p logs; \
+	echo "695998" > logs/seeds.txt; \
+	echo "   Testing same instruction with fix - expecting PASS..."; \
+	echo ""; \
+	PRESERVE_SEEDS=1 make regress && echo "   ✓ Fix verified - ADDI now works correctly" || echo "   ✗ Unexpected failure"; \
+	\
+	echo ""; \
+	echo "Bug demonstration complete!"; \
+	echo "See $(BUG_DIR)/BUG.md for detailed technical analysis." 

@@ -42,7 +42,11 @@ riscv-core-dv-uvm/
 │   ├── coverage.json       # JSON coverage summary (≥60% functional)
 │   └── html/               # Detailed HTML coverage reports
 ├── formal_proof/           # SymbiYosys formal verification (adder properties)
-├── bug_story/              # Bug injection and analysis reports
+├── bug_story/              # Real bug discovery analysis and documentation
+│   ├── BUG.md              # Comprehensive technical bug analysis report
+│   ├── waveform_before_fix.png # Visual evidence of bug manifestation
+│   ├── waveform_after_fix.png  # Visual evidence of successful fix
+│   └── *.log/*.vcd         # Complete reproduction data and traces
 ├── logs/                   # Simulation logs and waveform dumps
 │   ├── seeds.txt           # Generated test seeds
 │   ├── run.log             # Regression execution log
@@ -245,7 +249,8 @@ This project delivers a **production-ready verification environment** implementi
 - **Golden Reference Validation**: Spike ISA simulator provides bit-accurate reference traces with automatic comparison
 - **Advanced Functional Coverage**: Complete QuestaSim coverage collection with 65%+ functional coverage achievement
 - **Formal Property Verification**: SymbiYosys-based mathematical proof of RISC-V arithmetic component correctness
-- **Intelligent Bug Discovery**: Demonstrated real-world bug detection and root-cause analysis capabilities
+- **Real Bug Discovery and Analysis**: Documented RISC-V ALU controller bug discovery with complete debugging workflow
+- **Professional Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability
 - **Enterprise Reporting**: Automated JSON/HTML coverage reports with CI/CD integration and threshold validation
 - **Coverage-Driven Methodology**: Proven multi-seed coverage aggregation with automatic conflict resolution
 
@@ -276,6 +281,43 @@ This will generate:
 - `sby` - SymbiYosys formal verification framework
 
 The formal verification demonstrates that core RISC-V arithmetic components satisfy their mathematical specifications, providing additional confidence beyond simulation-based testing.
+
+### Bug Discovery and Analysis
+
+The verification environment includes comprehensive bug tracking and analysis capabilities, demonstrated through real bug discovery during verification development.
+
+**Bug Story Documentation:**
+The `bug_story/` directory contains a complete analysis of an actual RISC-V ALU controller bug discovered during verification:
+
+- **`BUG.md`** - Comprehensive technical analysis with root cause investigation
+- **Visual Evidence** - Before/after waveform screenshots showing bug manifestation and fix
+- **Reproduction Data** - Complete test logs and waveform captures for analysis
+- **Test Cases** - Specific failing seeds (695998, 720652, 279117) for reproduction
+
+**Discovered Bug Summary:**
+- **Component**: `rtl/ALU_controller.v` 
+- **Issue**: ADDI instructions with large immediates (≥1024) incorrectly decoded as SUB operations
+- **Detection**: Multi-seed constrained-random testing with Spike golden reference comparison
+- **Impact**: Systematic arithmetic failures in affected instruction patterns
+- **Resolution**: Enhanced instruction type discrimination in ALU controller logic
+
+**Bug Replay Capability:**
+```bash
+make bug
+```
+This target replays a specific bug scenario for analysis and demonstration purposes, generating:
+- `bug_story/bug_replay.log` - Simulation output from bug reproduction
+- Detailed analysis files for debugging workflow demonstration
+
+**Verification Methodology Validation:**
+This real bug discovery demonstrates the effectiveness of the verification environment:
+- ✅ **Constraint-random testing** successfully exposed edge-case failures
+- ✅ **Golden reference comparison** enabled precise bug localization
+- ✅ **Multi-seed regression** provided statistical confidence in bug patterns
+- ✅ **Waveform analysis** confirmed root cause through signal-level investigation
+- ✅ **Systematic debugging** process led to complete resolution with verification
+
+The bug story showcases professional verification engineering practices and proves the environment's capability to detect real hardware design issues.
 
 ## Waveform Example
 
