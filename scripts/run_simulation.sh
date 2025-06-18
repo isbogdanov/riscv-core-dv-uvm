@@ -4,10 +4,10 @@
 # Exit on any error
 set -e
 
-# Activate the project's conda environment to make the RISC-V toolchain available.
-# This is the robust way to ensure this script can find the necessary binaries.
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate amd-dv-sprint
+# # Activate the project's conda environment to make the RISC-V toolchain available.
+# # This is the robust way to ensure this script can find the necessary binaries.
+# source "$(conda info --base)/etc/profile.d/conda.sh"
+# conda activate amd-dv-sprint
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <seed1> [seed2] [seed3] ..."
@@ -20,7 +20,7 @@ cd "$ROOT_DIR"
 
 # Define the RISC-V toolchain prefix. This may need to be adjusted
 # depending on how the toolchain was installed (e.g., riscv32-unknown-elf).
-export RISCV_PREFIX="riscv64-unknown-elf"
+export RISCV_PREFIX=${RISCV_PREFIX:-riscv64-unknown-elf}
 
 # Regression counters
 pass_count=0
@@ -32,7 +32,7 @@ for seed in "$@"; do
     echo "           Running RTL Simulation for SEED = ${seed}"
     echo "========================================================="
     
-    TEST_NAME="riscv_arithmetic_basic_test"
+    TEST_NAME=${DEFAULT_TEST_NAME:-riscv_arithmetic_basic_test}
     
     # Find the output directory for this specific test
     # This is a bit brittle, assumes a single out_* directory
@@ -47,7 +47,7 @@ for seed in "$@"; do
     BIN_FILE="${ELF_FILE}.bin"
     RTL_LOG_FILE="${OUT_DIR}rtl_trace_${seed}.log"
     # Point to the raw text log from the spike simulation.
-    SPIKE_LOG_FILE="${OUT_DIR}spike_sim/riscv_arithmetic_basic_test_0.log"
+    SPIKE_LOG_FILE="${OUT_DIR}spike_sim/${TEST_NAME}_0.log"
 
     # Define paths for the standardized CSV files
     SPIKE_CSV_FILE="${OUT_DIR}spike_trace_${seed}.csv"
@@ -84,19 +84,21 @@ for seed in "$@"; do
 
     # 5. Compare the trace CSVs
     echo "--- Comparing RTL CSV with Spike CSV ---"
-    python3 uvm_env/riscv-dv/scripts/instr_trace_compare.py \
+    # The riscv-dv comparison script can exit with 0 even if a mismatch is found.
+    # To reliably detect a failure, we must capture its output and check for the
+    # '[FAILED]' string, in addition to checking the exit code.
+    compare_output=$(python3 uvm_env/riscv-dv/scripts/instr_trace_compare.py \
         --csv_file_1 "$SPIKE_CSV_FILE" \
-        --csv_file_2 "$RTL_CSV_FILE"
-
-    # Capture the exit code of the comparison
+        --csv_file_2 "$RTL_CSV_FILE" 2>&1)
     compare_status=$?
+    echo "$compare_output"
 
-    if [ "$compare_status" -eq 0 ]; then
-        echo "SEED ${seed}: PASS - CSVs are identical"
-        ((pass_count++))
-    else
+    if [ "$compare_status" -ne 0 ] || echo "$compare_output" | grep -q "\[FAILED\]"; then
         echo "SEED ${seed}: FAIL - CSV mismatch detected."
         ((fail_count++))
+    else
+        echo "SEED ${seed}: PASS - CSVs are identical"
+        ((pass_count++))
     fi
 done
 

@@ -9,14 +9,14 @@
 set -e # Exit on any error
 
 # --- Configuration ---
-# The RISC-V toolchain prefix. This must be in your system's PATH.
-RISCV_PREFIX="riscv64-unknown-elf"
+# Use environment variables if set, otherwise use defaults.
+RISCV_PREFIX=${RISCV_PREFIX:-riscv64-unknown-elf}
 CC="${RISCV_PREFIX}-gcc"
 
 # Compiler flags must match the target architecture.
 # The 'zicsr' extension is required for the CSR instructions used in the test harness.
-ISA="rv32i_zicsr"
-ABI="ilp32"
+ISA=${TARGET_ARCH:-rv32i_zicsr}
+ABI=${TARGET_ABI:-ilp32}
 # The compiler needs two include paths:
 # 1. The core riscv-dv environment for standard headers.
 # 2. The user_extension directory for project-specific headers.

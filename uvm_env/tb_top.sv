@@ -60,7 +60,7 @@ module tb_top;
         end
 
         // Enable waveform dumping for debug using standard Verilog commands
-        $dumpfile("waves.vcd");
+        $dumpfile("logs/waves.vcd");
         $dumpvars(0, tb_top);
     end
 

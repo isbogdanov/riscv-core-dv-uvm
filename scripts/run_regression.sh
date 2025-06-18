@@ -41,13 +41,15 @@ for seed in "${SEEDS[@]}"; do
     echo "========================================================="
     
     # We run the same test for each seed, but the seed makes it unique
-    TEST_NAME="riscv_arithmetic_basic_test"
+    # Use environment variables for test name and isa, with defaults.
+    TEST_NAME=${DEFAULT_TEST_NAME:-riscv_arithmetic_basic_test}
+    TARGET=${TARGET_ISA:-rv32i}
 
     # Run the generator step of the flow
     python3 "$RISCV_DV_RUN" \
         --test "$TEST_NAME" \
-        --target rv32i \
-        --isa rv32i \
+        --target "$TARGET" \
+        --isa "$TARGET" \
         --simulator "pyflow" \
         --steps gen \
         --iterations 1 \

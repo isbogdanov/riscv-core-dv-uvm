@@ -30,13 +30,19 @@ fi
 # Define the log file path, ensuring the directory exists.
 SPIKE_LOG_DIR="${OUT_DIR}spike_sim"
 mkdir -p "$SPIKE_LOG_DIR"
-# The log file name must match what the original flow created.
-SPIKE_LOG_FILE="${SPIKE_LOG_DIR}/riscv_arithmetic_basic_test_0.log"
+
+# Use environment variables if set, otherwise use defaults.
+TEST_NAME=${DEFAULT_TEST_NAME:-riscv_arithmetic_basic_test}
+TARGET_ISA=${TARGET_ISA:-rv32i}
+SPIKE=${SPIKE_CMD:-spike}
+
+# The log file name must match what the run_simulation.sh script expects.
+SPIKE_LOG_FILE="${SPIKE_LOG_DIR}/${TEST_NAME}_0.log"
 
 echo "--- Running Spike on ${ELF_FILE} ---"
 # The '-l' flag enables logging of retired instructions.
 # The '--log-commits' flag adds GPR write data to the log.
 # We must redirect stderr to stdout because Spike writes its log to stderr.
-spike -m0x80000000:0x20000 --isa=rv32i -l --log-commits "$ELF_FILE" > "$SPIKE_LOG_FILE" 2>&1
+"$SPIKE" -m0x80000000:0x20000 --isa="$TARGET_ISA" -l --log-commits "$ELF_FILE" > "$SPIKE_LOG_FILE" 2>&1
 
 echo "--- Spike simulation complete. Log at ${SPIKE_LOG_FILE} ---" 

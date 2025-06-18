@@ -30,5 +30,4 @@ __pycache__/
 
 seeds.txt
 
-# riscv-dv symbolic link
-uvm_env/riscv-dv/pygen/pygen_src/target/rv32im
+.env
