@@ -93,6 +93,10 @@ Before running any simulations, you must install the necessary tools and set up 
         sudo apt update
         sudo apt install yosys z3
 
+        git clone https://github.com/YosysHQ/sby
+        cd sby
+        sudo make install       # copies the 2-line wrapper to /usr/local/bin/sby
+
 
 ### Environment Setup
 
@@ -189,23 +193,13 @@ This project implements comprehensive verification methodologies following indus
 - **Constrained-Random Testing**: Using `riscv-dv` for automated test generation
 - **Golden Reference Checking**: Spike ISA simulator provides trusted reference traces
 - **Functional Coverage**: QuestaSim coverage collection with automated reporting
-- **Formal Verification**: SystemVerilog assertions and formal property checking with Z3 solver
+- **Formal Verification**: SystemVerilog assertions and formal property checking with Z3 solver, work in progress...
 - **Bug Injection**: Controlled bug introduction for verification methodology validation (planned)
 - **Automated Reporting**: JSON and HTML coverage reports with configurable thresholds
 
 ### Formal Verification
 
-The project includes formal property verification using Yosys and Z3:
-
-```bash
-make formal
-```
-
-**Properties Verified:**
-- **PC Alignment**: Program Counter must be 4-byte aligned
-- **x0 Register Protection**: Register x0 must never be written to
-
-**Requirements**: Only `sudo apt install yosys z3` needed - no additional formal verification frameworks required.
+Still work in progress...
 
 ## Waveform Example
 
