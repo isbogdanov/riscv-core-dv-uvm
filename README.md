@@ -17,19 +17,50 @@ The processor is a single-cycle implementation of the **RV32I base integer instr
 
 ## Project Structure
 
-The repository is organized to support a complete verification workflow, from simulation and coverage analysis to formal verification and bug tracking, as outlined below:
+The repository is organized to support a complete verification workflow, from simulation and coverage analysis to formal verification and bug tracking, following Tier A verification standards:
 
 ```
 riscv-core-dv-uvm/
-├── rtl/              # All processor RTL files (processor.v, ALU.v, etc.)
-├── uvm_env/          # UVM verification environment (tb_top.sv, sequences)
-├── coverage/         # Coverage reports (merged.ucdb, HTML reports)
-├── formal_proof/     # Formal property verification files
-├── bug_story/        # Bug report and analysis
-├── scripts/          # Helper scripts for automation (e.g., seed generation)
-├── docs/             # Verification plan and other documentation
-├── Makefile          # Automates compiling, simulation, and other tasks
-└── README.md         # This file
+├── rtl/                    # All processor RTL files (processor.v, ALU.v, etc.)
+├── uvm_env/                # UVM verification environment
+│   ├── cpu_top.sv          # DUT wrapper with formal properties
+│   ├── tb_top.sv           # Main UVM testbench top module
+│   ├── cpu_formal_if.sv    # Formal verification interface
+│   ├── custom_target/      # Custom riscv-dv target configurations
+│   └── riscv-dv/           # RISC-V DV generator (submodule)
+├── scripts/                # Python automation scripts
+│   ├── gen_seeds.py        # Random seed generation
+│   ├── run_regression.py   # Test generation orchestration
+│   ├── compile_assembly.py # Assembly compilation to ELF
+│   ├── run_spike.py        # Spike reference simulation
+│   ├── run_simulation.py   # RTL simulation and comparison
+│   ├── rtl_log_to_csv.py   # Log format conversion
+│   └── bin_conv.py         # Binary to Verilog memory format
+├── coverage/               # Coverage reports (merged.ucdb, HTML reports)
+├── formal_proof/           # Formal property verification files
+├── bug_story/              # Bug injection and analysis reports
+├── logs/                   # Simulation logs and waveform dumps
+│   ├── seeds.txt           # Generated test seeds
+│   ├── run.log             # Regression execution log
+│   └── waves.vcd           # Waveform capture files
+├── run_sample/             # Example regression run artifacts
+│   ├── example_wave.png    # Sample waveform screenshot
+│   ├── out_*/              # Sample test output directory
+│   └── run.log             # Sample regression log
+├── out_*/                  # Current test run outputs (generated)
+│   ├── asm_test/           # Generated assembly tests and ELF files
+│   ├── spike_sim/          # Spike reference simulation logs
+│   ├── *.csv               # Trace comparison files
+│   └── *.log               # Simulation trace logs
+├── work/                   # QuestaSim compilation workspace (generated)
+├── questa/                 # QuestaSim-specific scripts and configurations
+├── original_simulation/    # Legacy simulation files for reference
+├── docs/                   # Verification plan and documentation
+├── ci/                     # Continuous integration configurations
+├── environment.yml         # Conda environment specification
+├── env.example             # Environment variable template
+├── Makefile                # Build automation and regression targets
+└── README.md               # This file
 ```
 
 ## Getting Started
@@ -48,12 +79,9 @@ Before running any simulations, you must install the necessary tools and set up 
     *   **Installation**: Spike can be built from the [riscv-isa-sim](https://github.com/riscv-software-src/riscv-isa-sim) repository.
     *   **Configuration**: Ensure the `spike` executable is available in your system's `PATH`.
 
-4.  **Python 3**: The automation flow relies on several Python scripts.
-    *   **Installation**: Most systems have Python 3 pre-installed. You can check with `python3 --version`.
-    *   **Dependencies**: If a `requirements.txt` file is present, install the required packages using:
-        ```bash
-        pip install -r requirements.txt
-        ```
+4.  **Python 3.9.23**: The automation flow relies on several Python scripts and requires Python 3.9.23 or compatible version.
+    *   **Installation**: You can check your current Python version with `python3 --version`. If you need to install or upgrade Python, consider using conda/mamba for version management.
+    *   **Dependencies**: The Python dependencies are managed through the conda environment specified in `environment.yml`. This will be automatically installed when you create the conda environment in the setup steps below.
 
 ### Environment Setup
 
