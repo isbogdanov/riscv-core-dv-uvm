@@ -11,21 +11,28 @@ if { [info exists env(UVM_HOME)] } {
     exit -1
 }
 
+# Check if coverage is enabled
+set COVERAGE_FLAGS ""
+if { [info exists env(COV_ENABLE)] && $env(COV_ENABLE) == "1" } {
+    set COVERAGE_FLAGS "+cover=sbfec +acc"
+    echo "--- Coverage enabled ---"
+}
+
 # Compile UVM package
 echo "--- Compiling UVM library ---"
 vlog -L mtiUvm -work work -sv +incdir+$UVM_HOME/src $UVM_HOME/src/uvm_pkg.sv
 vlog -L mtiUvm -work work -sv +define+QUESTA_UVM_DPI_DISABLE +incdir+$UVM_HOME/src $env(QUESTA_HOME)/verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv
 
-# Compile all source files
+# Compile all source files with coverage if enabled
 echo "--- Compiling RTL files ---"
-vlog -work work -sv -mfcu rtl/*.v
+eval "vlog -work work -sv -mfcu $COVERAGE_FLAGS rtl/*.v"
 
 # vlog -work work -sv -mfcu /AI/hardware/projects/xilinx/SYSC4310/verilog/lab3/lab3.srcs/sources_1/new/*.v
 
 echo "--- Compiling UVM environment files ---"
-vlog -work work -sv +incdir+$UVM_HOME/src uvm_env/cpu_top.sv
-vlog -work work -sv +incdir+$UVM_HOME/src uvm_env/cpu_formal_if.sv
-vlog -work work -sv +incdir+$UVM_HOME/src uvm_env/tb_top.sv
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_top.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_formal_if.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/tb_top.sv"
 
 echo "--- Compilation finished ---"
 quit 

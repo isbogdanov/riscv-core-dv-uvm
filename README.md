@@ -36,7 +36,11 @@ riscv-core-dv-uvm/
 │   ├── run_simulation.py   # RTL simulation and comparison
 │   ├── rtl_log_to_csv.py   # Log format conversion
 │   └── bin_conv.py         # Binary to Verilog memory format
-├── coverage/               # Coverage reports (merged.ucdb, HTML reports)
+├── coverage/               # Functional coverage infrastructure
+│   ├── sim_*.ucdb          # Individual simulation coverage databases
+│   ├── merged.ucdb         # Merged coverage database
+│   ├── coverage.json       # JSON coverage summary (≥60% functional)
+│   └── html/               # Detailed HTML coverage reports
 ├── formal_proof/           # Formal property verification files
 ├── bug_story/              # Bug injection and analysis reports
 ├── logs/                   # Simulation logs and waveform dumps
@@ -119,6 +123,43 @@ To run a regression without cleaning the output directory or regenerating the te
 make PRESERVE_SEEDS=1 regress
 ```
 
+### Running with Coverage
+
+To run a regression with functional coverage collection enabled:
+```bash
+COV_ENABLE=1 make regress
+```
+
+After the regression completes, generate coverage reports:
+```bash
+make cov
+```
+
+This will create:
+- `coverage/coverage.json` - JSON summary with coverage percentages
+- `coverage/html/index.html` - Detailed HTML coverage report
+
+### Coverage Analysis
+
+The project implements comprehensive functional coverage collection and analysis:
+
+**Coverage Types Collected:**
+- **Functional Coverage**: Instruction execution patterns and architectural state changes
+- **Line Coverage**: RTL code line execution tracking  
+- **Branch Coverage**: Conditional branch execution analysis
+- **Statement Coverage**: Individual RTL statement execution
+
+**Coverage Infrastructure:**
+- **Collection**: QuestaSim's built-in coverage engine with `+cover=sbfec` flags
+- **Merging**: Automatic merging of multiple test run databases using `vcover merge`
+- **Reporting**: Dual-format output (JSON for automation, HTML for detailed analysis)
+- **Automation**: Python script `merge_cov.py` extracts and formats coverage metrics
+
+**Tier A Compliance:**
+- Target: ≥60% functional coverage (configurable)
+- Automated threshold checking in JSON output
+- Integration with regression flow for continuous coverage tracking
+
 ## Toolchain and Workflow
 
 This project leverages a suite of standard EDA tools and an automated flow to perform robust verification. The entire process is automated with `make regress` and follows these steps:
@@ -130,8 +171,20 @@ This project leverages a suite of standard EDA tools and an automated flow to pe
     *   The ELF file is converted into a Verilog-compatible memory file (`.mem`) and loaded into the processor's instruction memory.
     *   `QuestaSim` runs the simulation, executing the test on the RTL implementation of the processor.
     *   During the simulation, a trace log is generated in the same format as the Spike log.
+    *   **Coverage Collection**: When enabled with `COV_ENABLE=1`, functional coverage data is collected into UCDB databases.
 5.  **Comparison**: Both the Spike log and the RTL log are converted to a standard CSV format. A comparison script then diffs these files to ensure that the processor's behavior is bit-for-bit identical to the golden reference model.
 6.  **Result**: The regression passes if the traces match perfectly, indicating that the processor correctly executed the test program.
+
+### Verification Features
+
+This project implements comprehensive verification methodologies following industry standards:
+
+- **Constrained-Random Testing**: Using `riscv-dv` for automated test generation
+- **Golden Reference Checking**: Spike ISA simulator provides trusted reference traces
+- **Functional Coverage**: QuestaSim coverage collection with automated reporting
+- **Formal Verification**: SystemVerilog assertions and formal property checking (planned)
+- **Bug Injection**: Controlled bug introduction for verification methodology validation (planned)
+- **Automated Reporting**: JSON and HTML coverage reports with configurable thresholds
 
 ## Waveform Example
 

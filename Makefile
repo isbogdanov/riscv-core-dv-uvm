@@ -1,7 +1,7 @@
 # Makefile for the AMD-DV-Sprint project
 
 # --- Phony targets (don't represent files) ---
-.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim
+.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim cov formal bug
 
 # --- Environment Variables ---
 # Load environment variables from .env file if it exists.
@@ -15,6 +15,20 @@ NUM_SEEDS ?= 1
 LOG_DIR   ?= logs
 SEED_FILE ?= $(LOG_DIR)/seeds.txt
 RUN_LOG   ?= $(LOG_DIR)/run.log
+
+# Coverage variables
+COV_DIR   ?= coverage
+COV_UCDB  ?= $(COV_DIR)/merged.ucdb
+COV_JSON  ?= $(COV_DIR)/coverage.json
+
+# Formal verification variables
+FORMAL_DIR ?= formal_proof
+FORMAL_SBY ?= $(FORMAL_DIR)/pc_x0.sby
+FORMAL_LOG ?= $(FORMAL_DIR)/pc_x0.log
+
+# Bug story variables
+BUG_DIR   ?= bug_story
+BUG_SEED  ?= 12345
 
 # PRESERVE_SEEDS: Set to 1 to skip seed generation and log directory cleaning
 PRESERVE_SEEDS ?=
@@ -74,7 +88,11 @@ compile:
 # Elaborate the design for simulation
 elaborate: clean compile
 	@echo "--- Elaborating the design ---"
-	@$(VSIM) -c -do "vopt +acc -o smoke_top -work work tb_top; quit"
+	@if [ "$(COV_ENABLE)" = "1" ]; then \
+		$(VSIM) -c -do "vopt +acc +cover=sbfec -o smoke_top -work work tb_top; quit"; \
+	else \
+		$(VSIM) -c -do "vopt +acc -o smoke_top -work work tb_top; quit"; \
+	fi
 
 # --- Utility Targets ---
 
@@ -103,3 +121,46 @@ clean:
 	@rm -rf work/ transcript vsim.wlf smoke_top* out_* 
 	@if [ -z "$(PRESERVE_SEEDS)" ]; then rm -rf $(LOG_DIR)/*; fi
 	@rm -rf /tmp/$(USER)_dpi_* 
+
+# --- Tier A Verification Targets ---
+
+# Generate and merge functional coverage reports
+cov:
+	@echo "--- Generating coverage reports ---"
+	@mkdir -p $(COV_DIR)
+	@# Find all UCDB files and merge them
+	@UCDB_FILES=$$(find $(COV_DIR) -name "*.ucdb" 2>/dev/null || true); \
+	if [ -z "$$UCDB_FILES" ]; then \
+		echo "No coverage databases found. Run regression with coverage first:"; \
+		echo "  COV_ENABLE=1 make regress"; \
+		exit 1; \
+	fi; \
+	echo "Merging coverage databases: $$UCDB_FILES"; \
+	vcover merge $(COV_UCDB) $$UCDB_FILES
+	@# Generate HTML report
+	@vcover report -html -details -output $(COV_DIR)/html $(COV_UCDB)
+	@# Generate JSON summary
+	@python3 scripts/merge_cov.py $(COV_UCDB) -o $(COV_JSON)
+	@echo "Coverage reports generated:"
+	@echo "  JSON: $(COV_JSON)"
+	@echo "  HTML: $(COV_DIR)/html/index.html"
+
+# Run formal verification using SymbiYosys
+formal:
+	@echo "--- Running formal verification ---"
+	@mkdir -p $(FORMAL_DIR)
+	@if [ ! -f $(FORMAL_SBY) ]; then \
+		echo "Formal script not found: $(FORMAL_SBY)"; \
+		echo "Please create the SymbiYosys script first."; \
+		exit 1; \
+	fi
+	@cd $(FORMAL_DIR) && sby -f pc_x0.sby | tee pc_x0.log
+	@echo "Formal verification complete. Check $(FORMAL_LOG) for results."
+
+# Replay a specific bug scenario for demonstration
+bug:
+	@echo "--- Running bug replay scenario ---"
+	@mkdir -p $(BUG_DIR)
+	@echo "Replaying test with seed $(BUG_SEED) for bug analysis..."
+	@python3 scripts/run_simulation.py $(BUG_SEED) > $(BUG_DIR)/bug_replay.log 2>&1 || true
+	@echo "Bug replay complete. Check $(BUG_DIR)/ for analysis files." 

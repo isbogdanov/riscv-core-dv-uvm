@@ -119,11 +119,13 @@ def run_rtl_simulation(mem_file, rtl_log_file):
 
     host_cc_path = os.environ.get("HOST_CC_PATH", "/usr/bin/gcc")
 
+    # Check if coverage is enabled
+    cov_enable = os.environ.get("COV_ENABLE", "0") == "1"
+
+    # Base vsim command
     vsim_cmd = [
         "vsim",
         "-c",
-        "-do",
-        "run -all; quit",
         "-sv_lib",
         f"{questa_home}/uvm-1.2/linux_x86_64/uvm_dpi",
         "-cpppath",
@@ -132,6 +134,19 @@ def run_rtl_simulation(mem_file, rtl_log_file):
         f"+ram_init_file={mem_file}",
         f"+trace_log={rtl_log_file}",
     ]
+
+    # Add coverage options if enabled
+    if cov_enable:
+        import time
+
+        timestamp = int(time.time())
+        ucdb_file = f"coverage/sim_{timestamp}.ucdb"
+        os.makedirs("coverage", exist_ok=True)
+        vsim_cmd.extend(["-coverage", "-coverstore", ucdb_file])
+        print(f"Coverage enabled - saving to {ucdb_file}")
+
+    # Add the do command
+    vsim_cmd.extend(["-do", "run -all; quit"])
 
     try:
         subprocess.run(vsim_cmd, check=True)
