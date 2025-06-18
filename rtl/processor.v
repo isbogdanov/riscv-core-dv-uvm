@@ -189,6 +189,7 @@ module processor(
     ALU_controller ALU_control (.funct3(funct3),
                                 .funct7(funct7),
                                 .ALU_op(ALU_op),
+                                .opcode(opcode),
                                 .ALU_opcode(ALU_opcode)
                                    );
 

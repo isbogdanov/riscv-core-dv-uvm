@@ -8,6 +8,7 @@ module ALU_controller(
     input wire [2:0] funct3,
     input wire [6:0] funct7,
     input wire [1:0] ALU_op,
+    input wire [6:0] opcode,  // Add opcode input to distinguish R-type vs I-type
     output reg [3:0] ALU_opcode
     );
 
@@ -23,14 +24,22 @@ module ALU_controller(
     parameter ALU_SRA = 4'b1010; // New unique opcode
     parameter ALU_SLTU= 4'b1011; // New opcode for unsigned comparison
 
+    // Opcode definitions
+    parameter R_TYPE = 7'b0110011;
+    parameter I_TYPE = 7'b0010011;
+
     always @* begin
         case (ALU_op)
             // R-type or I-type (immediate arithmetic)
             2'b10: begin
                 case (funct3)
                     3'b000: // ADD or SUB
-                        if (funct7 == 7'b0100000) ALU_opcode = ALU_SUB;
-                        else ALU_opcode = ALU_ADD;
+                        // Only check funct7 for R-type instructions
+                        // For I-type (ADDI), always use ADD
+                        if (opcode == R_TYPE && funct7 == 7'b0100000) 
+                            ALU_opcode = ALU_SUB;
+                        else 
+                            ALU_opcode = ALU_ADD;
                     3'b001: // SLL / SLLI
                         ALU_opcode = ALU_SLL;
                     3'b010: // SLT / SLTI
@@ -40,8 +49,13 @@ module ALU_controller(
                     3'b100: // XOR / XORI
                         ALU_opcode = ALU_XOR;
                     3'b101: // SRL, SRA, SRLI, SRAI
-                        if (funct7 == 7'b0100000) ALU_opcode = ALU_SRA; // SRA or SRAI
-                        else ALU_opcode = ALU_SRL;                     // SRL or SRLI
+                        // Check funct7[5] (instruction[30]) for both R-type and I-type
+                        // R-type: SRA vs SRL based on funct7 == 0100000
+                        // I-type: SRAI vs SRLI based on instruction[30] (funct7[5])
+                        if (funct7[5] == 1'b1) 
+                            ALU_opcode = ALU_SRA; // SRA or SRAI
+                        else 
+                            ALU_opcode = ALU_SRL; // SRL or SRLI
                     3'b110: // OR / ORI
                         ALU_opcode = ALU_OR;
                     3'b111: // AND / ANDI
