@@ -35,8 +35,7 @@ gen:
 	@echo "--- Generating tests and Spike reference log ---"
 	@mkdir -p $(LOG_DIR)
 	@if [ -z "$(PRESERVE_SEEDS)" ]; then python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE); fi
-	@chmod +x scripts/run_regression.sh
-	@./scripts/run_regression.sh $$(cat $(SEED_FILE))
+	@python3 scripts/run_regression.py $$(cat $(SEED_FILE))
 
 # Manually compile the generated assembly files into ELFs
 compile_asm:
@@ -45,8 +44,7 @@ compile_asm:
 		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
 		exit 1; \
 	fi
-	@chmod +x scripts/compile_assembly.sh
-	@./scripts/compile_assembly.sh
+	@python3 scripts/compile_assembly.py
 
 # Run the reference Spike simulation to generate the golden trace log
 spike_sim: compile_asm
@@ -55,8 +53,7 @@ spike_sim: compile_asm
 		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
 		exit 1; \
 	fi
-	@chmod +x scripts/run_spike.sh
-	@./scripts/run_spike.sh $$(cat $(SEED_FILE))
+	@python3 scripts/run_spike.py $$(cat $(SEED_FILE))
 
 # Simulate previously generated tests and compare results
 sim:
@@ -65,8 +62,7 @@ sim:
 		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
 		exit 1; \
 	fi
-	@chmod +x scripts/run_simulation.sh
-	@./scripts/run_simulation.sh $$(cat $(SEED_FILE)) | tee $(RUN_LOG)
+	@python3 scripts/run_simulation.py $$(cat $(SEED_FILE)) | tee $(RUN_LOG)
 
 # --- Build Prerequisite Targets ---
 
