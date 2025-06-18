@@ -8,8 +8,8 @@ module program_counter(
 
     input [31:0] next_PC,
     output [31:0] current_PC,
-    wire clk,
-    wire rst
+    input clk,
+    input rst
    );
     
     reg [31:0] inst_address = 32'h80000000;

@@ -87,6 +87,13 @@ Before running any simulations, you must install the necessary tools and set up 
     *   **Installation**: You can check your current Python version with `python3 --version`. If you need to install or upgrade Python, consider using conda/mamba for version management.
     *   **Dependencies**: The Python dependencies are managed through the conda environment specified in `environment.yml`. This will be automatically installed when you create the conda environment in the setup steps below.
 
+5.  **Formal Verification Tools** (Optional - for `make formal`): 
+    *   **Installation**: Only the following system packages are required:
+        ```bash
+        sudo apt update
+        sudo apt install yosys z3
+
+
 ### Environment Setup
 
 1.  **Clone the repository and initialize submodules:**
@@ -182,9 +189,23 @@ This project implements comprehensive verification methodologies following indus
 - **Constrained-Random Testing**: Using `riscv-dv` for automated test generation
 - **Golden Reference Checking**: Spike ISA simulator provides trusted reference traces
 - **Functional Coverage**: QuestaSim coverage collection with automated reporting
-- **Formal Verification**: SystemVerilog assertions and formal property checking (planned)
+- **Formal Verification**: SystemVerilog assertions and formal property checking with Z3 solver
 - **Bug Injection**: Controlled bug introduction for verification methodology validation (planned)
 - **Automated Reporting**: JSON and HTML coverage reports with configurable thresholds
+
+### Formal Verification
+
+The project includes formal property verification using Yosys and Z3:
+
+```bash
+make formal
+```
+
+**Properties Verified:**
+- **PC Alignment**: Program Counter must be 4-byte aligned
+- **x0 Register Protection**: Register x0 must never be written to
+
+**Requirements**: Only `sudo apt install yosys z3` needed - no additional formal verification frameworks required.
 
 ## Waveform Example
 

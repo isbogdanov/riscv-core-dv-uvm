@@ -1,10 +1,13 @@
 // Wrapper for the RISC-V processor core, adding formal properties
 // and preparing it for integration into a larger test environment.
+// Supports both UVM simulation and formal verification via conditional compilation.
 //
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
 
-`include "uvm_macros.svh"
+`ifndef FORMAL_VERIFICATION
+    `include "uvm_macros.svh"
+`endif
 
 module cpu_top(
     input clock,

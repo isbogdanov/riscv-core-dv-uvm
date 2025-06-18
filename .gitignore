@@ -30,3 +30,8 @@ __pycache__/
 seeds.txt
 
 .env
+
+formal_proof/model
+# SymbiYosys formal verification workspace
+formal_proof/pc_x0/
+formal_proof/*.log
