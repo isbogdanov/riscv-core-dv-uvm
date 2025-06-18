@@ -49,7 +49,13 @@ gen:
 	@echo "--- Generating tests and Spike reference log ---"
 	@mkdir -p $(LOG_DIR)
 	@if [ -z "$(PRESERVE_SEEDS)" ]; then python3 scripts/gen_seeds.py $(NUM_SEEDS) > $(SEED_FILE); fi
-	@python3 scripts/run_regression.py $$(cat $(SEED_FILE))
+	@if [ -f "$(SEED_FILE)" ]; then \
+		python3 scripts/run_regression.py $$(cat $(SEED_FILE)); \
+	else \
+		echo "Error: Seed file '$(SEED_FILE)' not found. Cannot preserve non-existent seeds."; \
+		echo "Either run without PRESERVE_SEEDS=1 or create $(SEED_FILE) first."; \
+		exit 1; \
+	fi
 
 # Manually compile the generated assembly files into ELFs
 compile_asm:
@@ -120,6 +126,10 @@ clean:
 	@echo "--- Cleaning up ---"
 	@rm -rf work/ transcript vsim.wlf smoke_top* out_* 
 	@if [ -z "$(PRESERVE_SEEDS)" ]; then rm -rf $(LOG_DIR)/*; fi
+	@if [ "$(COV_ENABLE)" = "1" ]; then \
+		echo "Coverage enabled - cleaning old coverage data"; \
+		rm -rf $(COV_DIR)/*; \
+	fi
 	@rm -rf /tmp/$(USER)_dpi_* 
 
 # --- Tier A Verification Targets ---
@@ -129,14 +139,15 @@ cov:
 	@echo "--- Generating coverage reports ---"
 	@mkdir -p $(COV_DIR)
 	@# Find all UCDB files and merge them
-	@UCDB_FILES=$$(find $(COV_DIR) -name "*.ucdb" 2>/dev/null || true); \
+	@UCDB_FILES=$$(find $(COV_DIR) -name "sim_*.ucdb" 2>/dev/null || true); \
 	if [ -z "$$UCDB_FILES" ]; then \
 		echo "No coverage databases found. Run regression with coverage first:"; \
 		echo "  COV_ENABLE=1 make regress"; \
 		exit 1; \
 	fi; \
 	echo "Merging coverage databases: $$UCDB_FILES"; \
-	vcover merge $(COV_UCDB) $$UCDB_FILES
+	rm -f $(COV_UCDB); \
+	vcover merge -64 -suppress 6854 $(COV_UCDB) $$UCDB_FILES
 	@# Generate HTML report
 	@vcover report -html -details -output $(COV_DIR)/html $(COV_UCDB)
 	@# Generate JSON summary
