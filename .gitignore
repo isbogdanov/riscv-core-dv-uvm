@@ -4,7 +4,6 @@
 /work
 /modelsim.ini
 /transcript
-*.vcd
 *.wlf
 vsim.wlf
 

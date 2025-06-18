@@ -1,0 +1,2 @@
+var g_data = {"13":["work.ALU",95.86,1],"14":["work.ALU_controller",91.63,1],"7":["work.CPU_controller",81.45,1],"10":["work.adder",100.00,1],"15":["work.cpu_formal_if",50.00,1],"4":["work.data_memory",71.66,1],"12":["work.imm_gen",84.65,1],"3":["work.instruction_memory",100.00,1],"9":["work.multiplexor",100.00,1],"6":["work.processor",82.77,1],"8":["work.program_counter",100.00,1],"11":["work.register_file",92.20,1],"2":["work.tb_top",48.97,1]};
+processDuLinks(g_data);

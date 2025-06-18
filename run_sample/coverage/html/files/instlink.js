@@ -1,2 +1,0 @@
-var g_data = {"18":[17,"formal_if_inst",1],"20":[19,"CPU_control",1],"21":[19,"PC",1],"22":[19,"JALR_PC_source_select",1],"23":[19,"branch_adder",1],"24":[19,"PC_value",1],"25":[19,"increment_adder",1],"26":[19,"ALU_operand_2",1],"27":[19,"RF",1],"28":[19,"IMM",1],"29":[19,"ALU_instance",1],"30":[19,"ALU_control",1],"19":[17,"processor_inst",1],"17":[16,"dut",1],"31":[16,"instr_mem",1],"32":[16,"data_mem",1],"16":[-1,"tb_top",1]};
-processInstLinks(g_data);
