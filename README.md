@@ -17,7 +17,7 @@ The processor is a single-cycle implementation of the **RV32I base integer instr
 
 ## Project Structure
 
-The repository is organized to support a complete verification workflow, from simulation and coverage analysis to formal verification and bug tracking, following Tier A verification standards:
+The repository is organized to support a complete verification workflow, from simulation and coverage analysis to formal verification and bug tracking:
 
 ```
 riscv-core-dv-uvm/
@@ -62,7 +62,7 @@ riscv-core-dv-uvm/
 │   └── *.log               # Simulation trace logs
 ├── work/                   # QuestaSim compilation workspace (generated)
 ├── questa/                 # QuestaSim-specific scripts and configurations
-├── original_simulation/    # Legacy simulation files for reference
+├── original_code/          # Original RTL and testbench files for reference
 ├── docs/                   # Verification plan and documentation
 ├── ci/                     # Continuous integration configurations
 ├── environment.yml         # Conda environment specification
@@ -213,18 +213,18 @@ The project provides a **fully operational** coverage-driven verification enviro
 - **Branch Coverage**: 78%+ conditional branch execution analysis
 - **Statement Coverage**: Comprehensive individual RTL statement execution coverage
 
-**Production-Ready Infrastructure:**
-- **Collection**: QuestaSim's enterprise coverage engine with `+cover=sbfec` instrumentation
+**Coverage Infrastructure:**
+- **Collection**: QuestaSim's coverage engine with `+cover=sbfec` instrumentation
 - **Multi-Seed Merging**: Robust automatic aggregation of coverage from up to 20+ test runs
 - **Conflict Resolution**: Intelligent handling of coverage database merge conflicts
 - **Dual Reporting**: JSON metrics for CI/CD integration and detailed HTML reports for analysis
 - **Automation**: Streamlined `merge_cov.py` script with error handling and validation
 
-**Tier A Compliance Achieved:**
-- ✅ **65% functional coverage** (exceeds 60% requirement)
-- ✅ **Automated threshold validation** with pass/fail reporting
-- ✅ **Seamless regression integration** with zero-touch coverage collection
-- ✅ **Production-grade HTML reports** with drill-down capability
+**Coverage Metrics:**
+- **Functional Coverage**: 65%
+- **Automated threshold validation** with pass/fail reporting  
+- **Seamless regression integration** with zero-touch coverage collection
+- **HTML reports** with drill-down capability
 
 ## Toolchain and Workflow
 
@@ -243,15 +243,15 @@ This project leverages a suite of standard EDA tools and an automated flow to pe
 
 ### Verification Features
 
-This project delivers a **production-ready verification environment** implementing industry-standard methodologies:
+This project implements a verification environment with the following capabilities:
 
 - **Multi-Seed Constrained-Random Testing**: Fully operational `riscv-dv` integration with up to 20+ seed regression capability
 - **Golden Reference Validation**: Spike ISA simulator provides bit-accurate reference traces with automatic comparison
 - **Advanced Functional Coverage**: Complete QuestaSim coverage collection with 65%+ functional coverage achievement
 - **Formal Property Verification**: SymbiYosys-based mathematical proof of RISC-V arithmetic component correctness
 - **Real Bug Discovery and Analysis**: Documented RISC-V ALU controller bug discovery with complete debugging workflow
-- **Professional Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability
-- **Enterprise Reporting**: Automated JSON/HTML coverage reports with CI/CD integration and threshold validation
+- **Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability  
+- **Reporting**: Automated JSON/HTML coverage reports with CI/CD integration and threshold validation
 - **Coverage-Driven Methodology**: Proven multi-seed coverage aggregation with automatic conflict resolution
 
 ### Formal Verification
@@ -317,7 +317,7 @@ This real bug discovery demonstrates the effectiveness of the verification envir
 - ✅ **Waveform analysis** confirmed root cause through signal-level investigation
 - ✅ **Systematic debugging** process led to complete resolution with verification
 
-The bug story showcases professional verification engineering practices and proves the environment's capability to detect real hardware design issues.
+The bug story demonstrates verification engineering practices and shows the environment's capability to detect real hardware design issues.
 
 ## Waveform Example
 
