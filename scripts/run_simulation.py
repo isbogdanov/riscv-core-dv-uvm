@@ -43,17 +43,32 @@ def find_output_directory():
     return out_dirs[0]
 
 
-def find_elf_file(out_dir):
-    """Find the compiled ELF object in the assembly test directory"""
+def find_elf_file(out_dir, seed):
+    """Find the compiled ELF object for a specific seed in the assembly test directory"""
     asm_dir = os.path.join(out_dir, "asm_test")
+    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+
+    # Look for seed-specific ELF file first
+    seed_elf_file = os.path.join(asm_dir, f"{test_name}_{seed}.o")
+    if os.path.exists(seed_elf_file):
+        return seed_elf_file
+
+    # Fallback to default name (for single seed or legacy)
+    default_elf_file = os.path.join(asm_dir, f"{test_name}_0.o")
+    if os.path.exists(default_elf_file):
+        return default_elf_file
+
+    # If neither exists, show what files are available
     elf_files = glob.glob(os.path.join(asm_dir, "*.o"))
-    if not elf_files:
+    if elf_files:
+        print(f"Error: Expected ELF file for seed {seed} not found.", file=sys.stderr)
+        print(f"Available ELF files: {elf_files}", file=sys.stderr)
+    else:
         print(
-            f"Error: No .o file found in {asm_dir}. Did 'make compile_asm' run?",
+            f"Error: No .o files found in {asm_dir}. Did 'make compile_asm' run?",
             file=sys.stderr,
         )
-        sys.exit(1)
-    return elf_files[0]
+    sys.exit(1)
 
 
 def convert_elf_to_mem(elf_file, riscv_prefix):
@@ -219,11 +234,11 @@ def process_seed(seed, out_dir, riscv_prefix):
     test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
 
     # Find the compiled ELF file
-    elf_file = find_elf_file(out_dir)
+    elf_file = find_elf_file(out_dir, seed)
 
     # Define file paths
     rtl_log_file = os.path.join(out_dir, f"rtl_trace_{seed}.log")
-    spike_log_file = os.path.join(out_dir, "spike_sim", f"{test_name}_0.log")
+    spike_log_file = os.path.join(out_dir, "spike_sim", f"{test_name}_{seed}.log")
     spike_csv_file = os.path.join(out_dir, f"spike_trace_{seed}.csv")
     rtl_csv_file = os.path.join(out_dir, f"rtl_trace_{seed}.csv")
 

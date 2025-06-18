@@ -6,11 +6,14 @@
 
 """
 This script runs the riscv-dv test generation for multiple seeds.
+Each seed generates a separate test file to avoid overwriting.
 """
 
 import sys
 import os
 import subprocess
+import glob
+import shutil
 from pathlib import Path
 
 
@@ -30,6 +33,41 @@ def get_project_root():
             file=sys.stderr,
         )
         sys.exit(1)
+
+
+def find_output_directory():
+    """Find the output directory (assumes only one 'out_*' directory exists)"""
+    out_dirs = glob.glob("out_*/")
+    if not out_dirs:
+        print("Error: Output directory (out_*) not found.", file=sys.stderr)
+        sys.exit(1)
+    return out_dirs[0]
+
+
+def rename_generated_files(out_dir, seed, test_name):
+    """Rename generated files to include seed number"""
+    asm_dir = os.path.join(out_dir, "asm_test")
+
+    # Find the generated assembly file (default name)
+    default_asm = os.path.join(asm_dir, f"{test_name}_0.S")
+
+    if os.path.exists(default_asm):
+        # Rename to include seed
+        seed_asm = os.path.join(asm_dir, f"{test_name}_{seed}.S")
+        shutil.move(default_asm, seed_asm)
+        print(f"Renamed {default_asm} -> {seed_asm}")
+    else:
+        print(f"Warning: Expected file {default_asm} not found", file=sys.stderr)
+
+    # Also rename the riscv-dv generation log file
+    default_log = os.path.join(out_dir, f"sim_{test_name}_0.log")
+
+    if os.path.exists(default_log):
+        seed_log = os.path.join(out_dir, f"sim_{test_name}_{seed}.log")
+        shutil.move(default_log, seed_log)
+        print(f"Renamed {default_log} -> {seed_log}")
+    else:
+        print(f"Warning: Expected log file {default_log} not found", file=sys.stderr)
 
 
 def run_test_generation(seeds):
@@ -82,6 +120,11 @@ def run_test_generation(seeds):
 
         try:
             result = subprocess.run(cmd_args, env=env, check=True)
+
+            # After successful generation, rename files to include seed
+            out_dir = find_output_directory()
+            rename_generated_files(out_dir, seed, test_name)
+
         except subprocess.CalledProcessError as e:
             print(
                 f"Error running test generation for seed {seed}: {e}", file=sys.stderr

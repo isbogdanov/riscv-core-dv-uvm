@@ -68,6 +68,7 @@ def compile_assembly_files(out_dir, linker_script):
 
     # Find all assembly files
     asm_files = glob.glob(os.path.join(asm_dir, "*.S"))
+
     if not asm_files:
         print(f"Warning: No assembly files found in {asm_dir}", file=sys.stderr)
         return
@@ -85,6 +86,7 @@ def compile_assembly_files(out_dir, linker_script):
             result = subprocess.run(
                 cmd_args, check=True, capture_output=True, text=True
             )
+
         except subprocess.CalledProcessError as e:
             print(f"Error compiling {asm_file}: {e}", file=sys.stderr)
             if e.stderr:
