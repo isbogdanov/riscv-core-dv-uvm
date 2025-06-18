@@ -25,7 +25,7 @@ riscv-core-dv-uvm/
 ├── uvm_env/                # UVM verification environment
 │   ├── cpu_top.sv          # DUT wrapper with formal properties
 │   ├── tb_top.sv           # Main UVM testbench top module
-│   ├── cpu_formal_if.sv    # Formal verification interface
+│   ├── cpu_formal_if.sv    # Legacy formal interface (unused)
 │   ├── custom_target/      # Custom riscv-dv target configurations
 │   └── riscv-dv/           # RISC-V DV generator (submodule)
 ├── scripts/                # Python automation scripts
@@ -41,7 +41,7 @@ riscv-core-dv-uvm/
 │   ├── merged.ucdb         # Merged coverage database
 │   ├── coverage.json       # JSON coverage summary (≥60% functional)
 │   └── html/               # Detailed HTML coverage reports
-├── formal_proof/           # Formal property verification files
+├── formal_proof/           # SymbiYosys formal verification (adder properties)
 ├── bug_story/              # Bug injection and analysis reports
 ├── logs/                   # Simulation logs and waveform dumps
 │   ├── seeds.txt           # Generated test seeds
@@ -193,13 +193,37 @@ This project implements comprehensive verification methodologies following indus
 - **Constrained-Random Testing**: Using `riscv-dv` for automated test generation
 - **Golden Reference Checking**: Spike ISA simulator provides trusted reference traces
 - **Functional Coverage**: QuestaSim coverage collection with automated reporting
-- **Formal Verification**: SystemVerilog assertions and formal property checking with Z3 solver, work in progress...
+- **Formal Verification**: SymbiYosys-based formal property checking of RISC-V arithmetic components
 - **Bug Injection**: Controlled bug introduction for verification methodology validation (planned)
 - **Automated Reporting**: JSON and HTML coverage reports with configurable thresholds
 
 ### Formal Verification
 
-Still work in progress...
+The project includes formal verification using SymbiYosys (SBY) to prove mathematical properties of RISC-V processor components.
+
+**Current Implementation:**
+- **Target Module**: `adder.v` - Core arithmetic unit used throughout the processor
+- **Properties Verified**:
+  - Correctness: `result == (inA + inB)` 
+  - Commutativity: `result == (inB + inA)`
+- **Verification Depth**: 20 cycles with Z3 SMT solver
+- **Input Constraints**: Limited to ≤255 for efficient verification
+
+**Running Formal Verification:**
+```bash
+make formal
+```
+
+This will generate:
+- `formal_proof/pc_x0.log` - Verification results (should show `STATUS: PASSED`)
+- `formal_proof/pc_x0/` - Detailed solver artifacts and counterexample traces
+
+**Requirements:**
+- `yosys` - Synthesis tool for formal verification
+- `z3` - SMT solver for property checking  
+- `sby` - SymbiYosys formal verification framework
+
+The formal verification demonstrates that core RISC-V arithmetic components satisfy their mathematical specifications, providing additional confidence beyond simulation-based testing.
 
 ## Waveform Example
 

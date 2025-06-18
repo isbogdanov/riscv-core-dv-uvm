@@ -1,0 +1,18 @@
+[options]
+mode prove
+depth 20
+timeout 60
+
+[engines]
+smtbmc z3
+
+[script]
+# Read only the simple adder module and formal wrapper
+read -formal adder.v
+read -formal pc_x0_formal.sv
+
+prep -top pc_x0_formal
+
+[files]
+../rtl/adder.v
+./pc_x0_formal.sv 

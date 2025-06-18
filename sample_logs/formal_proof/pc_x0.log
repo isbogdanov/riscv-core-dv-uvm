@@ -1,0 +1,69 @@
+SBY 16:09:43 [pc_x0] Removing directory '/AI/hardware/projects/AMD/lab3/amd-dv-sprint/formal_proof/pc_x0'.
+SBY 16:09:43 [pc_x0] Copy '/AI/hardware/projects/AMD/lab3/amd-dv-sprint/rtl/adder.v' to '/AI/hardware/projects/AMD/lab3/amd-dv-sprint/formal_proof/pc_x0/src/adder.v'.
+SBY 16:09:43 [pc_x0] Copy '/AI/hardware/projects/AMD/lab3/amd-dv-sprint/formal_proof/pc_x0_formal.sv' to '/AI/hardware/projects/AMD/lab3/amd-dv-sprint/formal_proof/pc_x0/src/pc_x0_formal.sv'.
+SBY 16:09:43 [pc_x0] engine_0: smtbmc z3
+SBY 16:09:43 [pc_x0] base: starting process "cd pc_x0/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 16:09:43 [pc_x0] base: finished (returncode=0)
+SBY 16:09:43 [pc_x0] prep: starting process "cd pc_x0/model; yosys -ql design_prep.log design_prep.ys"
+SBY 16:09:43 [pc_x0] prep: finished (returncode=0)
+SBY 16:09:43 [pc_x0] smt2: starting process "cd pc_x0/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 16:09:43 [pc_x0] smt2: finished (returncode=0)
+SBY 16:09:43 [pc_x0] engine_0.basecase: starting process "cd pc_x0; yosys-smtbmc -s z3 --presat --noprogress -t 20  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 16:09:43 [pc_x0] engine_0.induction: starting process "cd pc_x0; yosys-smtbmc -s z3 --presat -i --noprogress -t 20  --append 0 --dump-vcd engine_0/trace_induct.vcd --dump-yw engine_0/trace_induct.yw --dump-vlogtb engine_0/trace_induct_tb.v --dump-smtc engine_0/trace_induct.smtc model/design_smt2.smt2"
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Solver: z3
+SBY 16:09:43 [pc_x0] engine_0.induction: ##   0:00:00  Solver: z3
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 0..
+SBY 16:09:43 [pc_x0] engine_0.induction: ##   0:00:00  Trying induction in step 20..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 0..
+SBY 16:09:43 [pc_x0] engine_0.induction: ##   0:00:00  Temporal induction successful.
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 1..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 1..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 2..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 2..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 3..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 3..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 4..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 4..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 5..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 5..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 6..
+SBY 16:09:43 [pc_x0] engine_0.induction: ##   0:00:00  Status: passed
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 6..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 7..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 7..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 8..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 8..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 9..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 9..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 10..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 10..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 11..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 11..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 12..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 12..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 13..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 13..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 14..
+SBY 16:09:43 [pc_x0] engine_0.induction: finished (returncode=0)
+SBY 16:09:43 [pc_x0] engine_0.induction: Status returned by engine for induction: pass
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 14..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 15..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 15..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 16..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 16..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 17..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 17..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 18..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 18..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assumptions in step 19..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Checking assertions in step 19..
+SBY 16:09:43 [pc_x0] engine_0.basecase: ##   0:00:00  Status: passed
+SBY 16:09:43 [pc_x0] engine_0.basecase: finished (returncode=0)
+SBY 16:09:43 [pc_x0] engine_0.basecase: Status returned by engine for basecase: pass
+SBY 16:09:43 [pc_x0] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:09:43 [pc_x0] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:09:43 [pc_x0] summary: engine_0 (smtbmc z3) returned pass for basecase
+SBY 16:09:43 [pc_x0] summary: engine_0 (smtbmc z3) returned pass for induction
+SBY 16:09:43 [pc_x0] summary: engine_0 did not produce any traces
+SBY 16:09:43 [pc_x0] summary: successful proof by k-induction.
+SBY 16:09:43 [pc_x0] DONE (PASS, rc=0)
