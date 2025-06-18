@@ -156,9 +156,10 @@ def run_rtl_simulation(mem_file, rtl_log_file):
 
         timestamp = int(time.time())
         ucdb_file = f"coverage/sim_{timestamp}.ucdb"
+        test_name = f"seed_{timestamp}"
         os.makedirs("coverage", exist_ok=True)
-        vsim_cmd.extend(["-coverage", "-coverstore", ucdb_file])
-        print(f"Coverage enabled - saving to {ucdb_file}")
+        vsim_cmd.extend(["-coverage", "-coverstore", ucdb_file, "-testname", test_name])
+        print(f"Coverage enabled - saving to {ucdb_file} with test name {test_name}")
 
     # Add the do command
     vsim_cmd.extend(["-do", "run -all; quit"])
