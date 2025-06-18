@@ -1,5 +1,8 @@
 #!/bin/bash
 # scripts/run_simulation.sh
+#
+# Copyright (c) 2025 Igor Bogdanov
+# All rights reserved.
 
 # Exit on any error
 set -e

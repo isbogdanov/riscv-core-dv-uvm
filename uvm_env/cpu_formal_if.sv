@@ -1,5 +1,8 @@
 // This interface contains formal properties (assertions) for the cpu_top module.
 // It is bound to the DUT instance to provide non-intrusive checking.
+//
+// Copyright (c) 2025 Igor Bogdanov
+// All rights reserved.
 
 `include "uvm_macros.svh"
 

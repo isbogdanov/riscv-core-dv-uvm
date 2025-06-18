@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # scripts/gen_seeds.py
+#
+# Copyright (c) 2025 Igor Bogdanov
+# All rights reserved.
 
 import sys
 import random

@@ -3,6 +3,10 @@
 
 // This is the main UVM testbench top module. It instantiates the DUT
 // and the interface that connects it to the UVM verification components.
+//
+// Copyright (c) 2025 Igor Bogdanov
+// All rights reserved.
+
 module tb_top;
 
     import uvm_pkg::*;

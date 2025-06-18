@@ -1,5 +1,8 @@
 #!/bin/bash
 # scripts/run_spike.sh
+#
+# Copyright (c) 2025 Igor Bogdanov
+# All rights reserved.
 
 # This script runs the Spike instruction set simulator on a pre-compiled
 # ELF file. This ensures that Spike and the RTL simulation execute the

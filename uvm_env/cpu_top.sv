@@ -1,5 +1,8 @@
 // Wrapper for the RISC-V processor core, adding formal properties
 // and preparing it for integration into a larger test environment.
+//
+// Copyright (c) 2025 Igor Bogdanov
+// All rights reserved.
 
 `include "uvm_macros.svh"
 
