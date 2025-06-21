@@ -47,14 +47,14 @@ riscv-core-dv-uvm/
 │   ├── waveform_before_fix.png # Visual evidence of bug manifestation
 │   ├── waveform_after_fix.png  # Visual evidence of successful fix
 │   └── *.log/*.vcd         # Complete reproduction data and traces
-├── logs/                   # Simulation logs and waveform dumps
-│   ├── seeds.txt           # Generated test seeds
-│   ├── run.log             # Regression execution log
-│   └── waves.vcd           # Waveform capture files
-├── run_sample/             # Example regression run artifacts
-│   ├── example_wave.png    # Sample waveform screenshot
+├── sample_logs/            # Example regression run artifacts and coverage data
+│   ├── coverage/           # Sample coverage databases and HTML reports
+│   ├── formal_proof/       # Sample formal verification results
 │   ├── out_*/              # Sample test output directory
-│   └── run.log             # Sample regression log
+│   ├── example_wave.png    # Sample waveform screenshot
+│   ├── run.log             # Sample regression execution log
+│   ├── seeds.txt           # Sample test seeds
+│   └── waves.vcd           # Sample waveform capture files
 ├── out_*/                  # Current test run outputs (generated)
 │   ├── asm_test/           # Generated assembly tests and ELF files
 │   ├── spike_sim/          # Spike reference simulation logs
@@ -63,7 +63,6 @@ riscv-core-dv-uvm/
 ├── work/                   # QuestaSim compilation workspace (generated)
 ├── questa/                 # QuestaSim-specific scripts and configurations
 ├── original_code/          # Original RTL and testbench files for reference
-├── docs/                   # Verification plan and documentation
 ├── ci/                     # Continuous integration configurations
 ├── environment.yml         # Conda environment specification
 ├── env.example             # Environment variable template
