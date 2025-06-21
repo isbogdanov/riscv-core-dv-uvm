@@ -25,7 +25,7 @@ riscv-core-dv-uvm/
 ├── uvm_env/                # UVM verification environment
 │   ├── cpu_top.sv          # DUT wrapper with formal properties
 │   ├── tb_top.sv           # Main UVM testbench top module
-│   ├── cpu_formal_if.sv    # Legacy formal interface (unused)
+│   ├── cpu_checker_if.sv   # SystemVerilog assertions for run-time checking
 │   ├── custom_target/      # Custom riscv-dv target configurations
 │   └── riscv-dv/           # RISC-V DV generator (submodule)
 ├── scripts/                # Python automation scripts
@@ -63,7 +63,7 @@ riscv-core-dv-uvm/
 ├── work/                   # QuestaSim compilation workspace (generated)
 ├── questa/                 # QuestaSim-specific scripts and configurations
 ├── original_code/          # Original RTL and testbench files for reference
-├── ci/                     # Continuous integration configurations
+├── ci/                     # CI configurations (not yet implemented)
 ├── environment.yml         # Conda environment specification
 ├── env.example             # Environment variable template
 ├── Makefile                # Build automation and regression targets

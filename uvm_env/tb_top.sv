@@ -46,7 +46,6 @@ module tb_top;
     );
 
     initial begin
-        string elf_file;
         string trace_log;
         string ram_init_file;
 
@@ -99,7 +98,6 @@ module tb_top;
     );
 
     // This block will write the trace of retired instructions to the log file.
-    // The format must be IDENTICAL to the Spike log for the CSV converter to work.
     always @(posedge clock) begin
         if (!rst) begin
             if (reg_write_o) begin
@@ -115,8 +113,7 @@ module tb_top;
         end
     end
 
-    // Add a separate always block to detect ECALL and terminate the simulation.
-    // This is the correct way to end a compliance test.
+    // A separate always block to detect ECALL and terminate the simulation.
     always @(posedge clock) begin
         if (!rst && instruction == 32'h00000073) begin
             // Log the ecall to ensure it's captured before finishing
@@ -129,8 +126,8 @@ module tb_top;
         end
     end
 
-    // Bind the formal interface to the DUT instance's internal signals
-    bind cpu_top cpu_formal_if formal_if_inst (
+    // Bind the assertion-checker interface to the cpu_top module
+    bind cpu_top cpu_checker_if checker_if_inst (
         .clock(clock),
         .rst(rst),
         .current_PC(current_PC),
