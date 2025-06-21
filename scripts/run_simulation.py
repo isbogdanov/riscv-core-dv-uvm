@@ -46,7 +46,7 @@ def find_output_directory():
 def find_elf_file(out_dir, seed):
     """Find the compiled ELF object for a specific seed in the assembly test directory"""
     asm_dir = os.path.join(out_dir, "asm_test")
-    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+    test_name = os.environ.get("TEST_NAME", "riscv_arithmetic_basic_test")
 
     # Look for seed-specific ELF file first
     seed_elf_file = os.path.join(asm_dir, f"{test_name}_{seed}.o")
@@ -232,7 +232,7 @@ def process_seed(seed, out_dir, riscv_prefix):
     print(f"           Running RTL Simulation for SEED = {seed}")
     print("=" * 57)
 
-    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+    test_name = os.environ.get("TEST_NAME", "riscv_arithmetic_basic_test")
 
     # Find the compiled ELF file
     elf_file = find_elf_file(out_dir, seed)

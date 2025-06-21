@@ -33,6 +33,9 @@ BUG_SEED  ?= 12345
 # PRESERVE_SEEDS: Set to 1 to skip seed generation and log directory cleaning
 PRESERVE_SEEDS ?=
 
+# Test configuration variables (set via command line or .env file)
+# Example: TEST_NAME=riscv_rand_instr_test make regress
+
 # --- Main Targets ---
 
 # Default target

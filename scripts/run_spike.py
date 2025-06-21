@@ -32,7 +32,7 @@ def find_output_directory():
 def find_elf_file(out_dir, seed):
     """Find the compiled ELF object for a specific seed in the assembly test directory"""
     asm_dir = os.path.join(out_dir, "asm_test")
-    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+    test_name = os.environ.get("TEST_NAME", "riscv_arithmetic_basic_test")
 
     # Look for seed-specific ELF file first
     seed_elf_file = os.path.join(asm_dir, f"{test_name}_{seed}.o")
@@ -64,7 +64,7 @@ def run_spike_for_seed(seed, out_dir, elf_file):
     os.makedirs(spike_log_dir, exist_ok=True)
 
     # Use environment variables if set, otherwise use defaults
-    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+    test_name = os.environ.get("TEST_NAME", "riscv_arithmetic_basic_test")
     target_isa = os.environ.get("TARGET_ISA", "rv32i")
     spike_cmd = os.environ.get("SPIKE_CMD", "spike")
 

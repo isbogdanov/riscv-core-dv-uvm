@@ -88,8 +88,8 @@ def run_test_generation(seeds):
     else:
         env["PYTHONPATH"] = pygen_src_path
 
-    # Use environment variables for test name and ISA, with defaults
-    test_name = os.environ.get("DEFAULT_TEST_NAME", "riscv_arithmetic_basic_test")
+        # Use environment variables for test name and ISA, with defaults
+    test_name = os.environ.get("TEST_NAME", "riscv_arithmetic_basic_test")
     target_isa = os.environ.get("TARGET_ISA", "rv32i")
 
     # Loop through all the provided seeds
@@ -102,6 +102,8 @@ def run_test_generation(seeds):
         cmd_args = [
             "python3",
             riscv_dv_run,
+            "--custom_target",
+            "uvm_env/custom_target/rv32i",
             "--test",
             test_name,
             "--target",
