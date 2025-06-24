@@ -1,8 +1,0 @@
-# This file must be a list of dictionaries. Each dictionary defines an ISS.
-- iss: spike
-  # path_var is required by the script, but can be empty if the tool is in the PATH.
-  path_var: "SPIKE_HOME"
-  # The entire command, with placeholders, must be on the 'cmd' line.
-  # The -m flag tells Spike to create memory. We place it at 0x80000000
-  # to avoid conflicting with the default boot ROM at 0x0.
-  cmd: "spike -m0x80000000:0x20000 --isa=rv32im -l --log-commits <elf>"

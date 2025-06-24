@@ -17,7 +17,7 @@ module cpu_top(
     
     output mem_read,
     output mem_write,
-    output [3:0]  address,
+    output [31:0]  address,
     
     output [31:0] mem_write_data, 
     input [31:0] mem_read_data,
