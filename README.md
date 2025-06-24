@@ -1,4 +1,4 @@
-# RISC-V Processor and UVM Verification Environment POC
+# RISC-V Processor and UVM Verification Environment
 
 This repository contains the implementation of a 32-bit RISC-V processor and a comprehensive UVM-inspired verification environment designed to ensure its correctness.
 
