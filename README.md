@@ -3,11 +3,23 @@
 This repository contains the implementation of a 32-bit RISC-V processor and a comprehensive UVM-inspired verification environment designed to ensure its correctness.
 
 ## Disclaimer
-This project was created for educational purposes to explore the Universal Verification Methodology (UVM). The current branch implements a script-based, automated verification flow. While this flow is designed to support all tests in `testlist.yaml`, its primary purpose is to serve as a learning exercise in UVM rather than a comprehensive verification of the RISC-V core.
+ The current branch implements a script-based UVM-inspired, automated verification flow. While this flow is designed to support all tests in `testlist.yaml`, its primary purpose is to serve as a learning exercise in UVM rather than a comprehensive verification of the RISC-V core.
+
+
+
+## Disclaimer
+This branch implements a **script-driven, UVM-inspired verification flow**.  
+It is wired to run every test in `testlist.yaml`, but is intended as a **proof-of-concept workflow** rather than a full verification closure of the RISC-V core.
 
 To demonstrate the workflow, the environment currently focuses on the `riscv_arithmetic_basic_test`. Full validation using the complete test suite is planned for future work.
 
 For a more conventional, class-based UVM implementation attempt, please see the [UVM-classic-approach branch](https://github.com/isbogdanov/riscv-core-dv-uvm/tree/UVM-classic-approach).
+
+> **Branch scope**  
+> *main* = fast CI-friendly regression (riscv-dv, Spike compare, coverage 88 %).  
+> *UVM-classic-approach* = class-based reusable UVM env + in-sim scoreboard + formal hooks.
+
+
 
 
 ## Core Architecture
