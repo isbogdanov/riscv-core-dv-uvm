@@ -21,7 +21,7 @@ vsim.wlf
 /current_state.txt
 
 # Generated assembly tests from riscv-dv
-/uvm_env/riscv-dv/asm_test
+/RISC-V/riscv-dv/asm_test
 
 # Python cache
 __pycache__/

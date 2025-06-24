@@ -29,10 +29,16 @@ eval "vlog -work work -sv -mfcu $COVERAGE_FLAGS rtl/*.v"
 
 # vlog -work work -sv -mfcu /AI/hardware/projects/xilinx/SYSC4310/verilog/lab3/lab3.srcs/sources_1/new/*.v
 
-echo "--- Compiling UVM environment files ---"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_top.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_checker_if.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/tb_top.sv"
+echo "--- Compiling UVM scripted flow files ---"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/cpu_top.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/cpu_checker_if.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/tb_top.sv"
+
+# --- UVM Refactored Environment ---
+echo "--- Compiling UVM Refactored environment files ---"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/cpu_interface.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/riscv_uvm_pkg.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/uvm_top.sv"
 
 echo "--- Compilation finished ---"
 quit 

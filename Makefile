@@ -1,7 +1,7 @@
 # Makefile for the AMD-DV-Sprint project
 
 # --- Phony targets (don't represent files) ---
-.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim cov formal bug
+.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim cov formal bug uvm_compile uvm_smoke uvm_regress
 
 # --- Environment Variables ---
 # Load environment variables from .env file if it exists.
@@ -69,6 +69,11 @@ compile_asm:
 	fi
 	@python3 scripts/compile_assembly.py
 
+# Convert compiled ELF files to Verilog memory format
+mem_convert:
+	@echo "--- Converting ELF files to memory format ---"
+	@python3 scripts/mem_convert.py
+
 # Run the reference Spike simulation to generate the golden trace log
 spike_sim: compile_asm
 	@echo "--- Running Spike reference simulation ---"
@@ -111,6 +116,42 @@ smoke: clean elaborate
 	@mkdir -p $(LOG_DIR)
 	@rm -rf "/tmp/$(USER)_dpi_*"
 	@$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi -cpppath $(HOST_CC_PATH) smoke_top -do "run -all; quit"
+
+# Compile UVM refactored implementation only
+uvm_compile:
+	@echo "--- Compiling UVM Refactored implementation ---"
+	@$(VSIM) -c -do "do questa/scripts/compile_uvm_refactored.do"
+
+# Run a smoke test on the new UVM refactored environment
+uvm_smoke: clean uvm_compile
+	@echo "--- Running UVM smoke test ---"
+	@$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi \
+		-cpppath $(HOST_CC_PATH) \
+		-do "run -all; quit" \
+		uvm_top \
+		+UVM_TESTNAME=riscv_base_test
+
+# Run a UVM regression using a generated test program
+uvm_regress: clean uvm_compile gen compile_asm mem_convert spike_sim
+	@echo "--- Running UVM regression ---"; \
+	echo "--- DEBUG: Listing generated files before search ---"; \
+	ls -R out_*; \
+	echo "--- DEBUG: End of file listing ---"; \
+	MEM_FILE=$$(find out_*/asm_test -name "*.o.mem" -print -quit); \
+	SPIKE_LOG=$$(find out_*/spike_sim -name "*.log" -print -quit); \
+	if [ -z "$$MEM_FILE" ] || [ -z "$$SPIKE_LOG" ]; then \
+		echo "Error: Could not find a .mem or spike.log file. Please check previous steps."; \
+		exit 1; \
+	fi; \
+	echo "Found memory file: $$MEM_FILE"; \
+	echo "Found spike log: $$SPIKE_LOG"; \
+	$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi \
+		-cpppath $(HOST_CC_PATH) \
+		-do "run -all; quit" \
+		uvm_top \
+		+UVM_TESTNAME=riscv_base_test \
+		+MEM_FILE="$$MEM_FILE" \
+		+SPIKE_LOG="$$SPIKE_LOG"
 
 # Run a debug simulation using a fixed RAM file
 debug_ram: clean elaborate
