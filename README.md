@@ -1,4 +1,4 @@
-# RISC-V Processor and UVM Verification Environment - Proof of Concept - WORK IN PROGRESS
+# RISC-V Processor and UVM Verification Environment POC
 
 This repository contains the implementation of a 32-bit RISC-V processor and a comprehensive UVM-inspired verification environment designed to ensure its correctness.
 
@@ -212,26 +212,19 @@ make cov
 
 ### Coverage Analysis
 
-The project provides a **fully operational** coverage-driven verification environment with proven multi-seed capabilities:
+The project features coverage-driven verification environment. The image below shows a sample coverage report from QuestaSim, generated after running a regression with 8 unique seeds for the `riscv_arithmetic_basic_test`.
 
-**Coverage Types Achieved:**
-- **Functional Coverage**: 65%+ instruction execution patterns and architectural state coverage
-- **Line Coverage**: 85%+ RTL code line execution tracking  
-- **Branch Coverage**: 78%+ conditional branch execution analysis
-- **Statement Coverage**: Comprehensive individual RTL statement execution coverage
+![QuestaSim Coverage Report](./sample_logs/coverage_html.png)
 
-**Coverage Infrastructure:**
-- **Collection**: QuestaSim's coverage engine with `+cover=sbfec` instrumentation
-- **Multi-Seed Merging**: Robust automatic aggregation of coverage from up to 20+ test runs
-- **Conflict Resolution**: Intelligent handling of coverage database merge conflicts
-- **Dual Reporting**: JSON metrics for CI/CD integration and detailed HTML reports for analysis
-- **Automation**: Streamlined `merge_cov.py` script with error handling and validation
+This report provides a detailed view of verification progress:
+- **Instance-Based Analysis**: The left panel shows a hierarchical view of the design, allowing you to see coverage for each module instance (e.g., `dut`, `data_mem`).
+- **Coverage Summary**: The main tables display key coverage metrics, including:
+  - **Branches**: (83.63%) - Have all `if/else` and `case` statements been fully explored?
+  - **Conditions**: (87.5%) - Have all boolean conditions in logic been evaluated to both `true` and `false`?
+  - **Statements**: (91.11%) - Has every line of executable code been run?
+  - **Total Coverage**: (88.23%) - The aggregated coverage score across all metrics.
 
-**Coverage Metrics:**
-- **Functional Coverage**: 65%
-- **Automated threshold validation** with pass/fail reporting  
-- **Seamless regression integration** with zero-touch coverage collection
-- **HTML reports** with drill-down capability
+This data is crucial for identifying which parts of the design have not been sufficiently tested, guiding further test development. A complete, interactive version of this report can be found in the `coverage/html` directory after running a regression with coverage enabled.
 
 ## Toolchain and Workflow
 
