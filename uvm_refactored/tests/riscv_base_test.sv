@@ -17,23 +17,31 @@ class riscv_base_test extends uvm_test;
 
     virtual function void build_phase(uvm_phase phase);
         string spike_log_path;
+        string mem_file_path;
         super.build_phase(phase);
         
         env = cpu_env::type_id::create("env", this);
 
-        // Get Spike log path from the command line plusargs
+        // Get Spike log path for the commit scoreboard
         if (!$value$plusargs("SPIKE_LOG=%s", spike_log_path))
             `uvm_fatal(get_type_name(), "SPIKE_LOG plusarg not provided")
         
-        // Set file paths and event in the config DB for components to retrieve
-        uvm_config_db#(string)::set(this, "env.scoreboard", "SPIKE_LOG", spike_log_path);
-        uvm_config_db#(uvm_event)::set(this, "env.scoreboard", "test_done_event", test_done_event);
+        // Get memory file path for the flow predictor
+        if (!$value$plusargs("MEM_FILE=%s", mem_file_path))
+            `uvm_fatal(get_type_name(), "MEM_FILE plusarg not provided")
+
+        // Set paths and events in the config DB for components to retrieve
+        uvm_config_db#(string)::set(this, "env.commit_scoreboard", "SPIKE_LOG", spike_log_path);
+        uvm_config_db#(string)::set(this, "env.flow_predictor", "MEM_FILE", mem_file_path);
+        uvm_config_db#(uvm_event)::set(this, "env.commit_scoreboard", "test_done_event", test_done_event);
+        uvm_config_db#(uvm_event)::set(this, "env.flow_scoreboard", "test_done_event", test_done_event);
     endfunction
 
     function void end_of_elaboration_phase(uvm_phase phase);
         super.end_of_elaboration_phase(phase);
-        // Set the verbosity for the scoreboard specifically to see MATCH messages.
-        env.scoreboard.set_report_verbosity_level(UVM_HIGH);
+        // Set verbosity levels for the scoreboards to see MATCH messages.
+        env.commit_scoreboard.set_report_verbosity_level(UVM_HIGH);
+        env.flow_scoreboard.set_report_verbosity_level(UVM_HIGH);
     endfunction
 
     virtual task run_phase(uvm_phase phase);

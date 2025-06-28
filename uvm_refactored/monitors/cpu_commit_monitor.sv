@@ -1,4 +1,4 @@
-// uvm_refactored/monitors/cpu_monitor.sv
+// uvm_refactored/monitors/cpu_commit_monitor.sv
 //
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
@@ -6,14 +6,14 @@
 // Passive monitor that observes processor commit stage signals
 // and converts them to UVM transactions for checking
 // Uses clocking block for consistent timing discipline with future drivers
-class cpu_monitor extends uvm_monitor;
+class cpu_commit_monitor extends uvm_monitor;
 
-    `uvm_component_utils(cpu_monitor)
+    `uvm_component_utils(cpu_commit_monitor)
 
     virtual cpu_interface.monitor_mp vif;
     uvm_analysis_port#(riscv_commit_transaction) item_collected_port;
 
-    function new(string name = "cpu_monitor", uvm_component parent = null);
+    function new(string name = "cpu_commit_monitor", uvm_component parent = null);
         super.new(name, parent);
         item_collected_port = new("item_collected_port", this);
     endfunction
@@ -69,7 +69,7 @@ class cpu_monitor extends uvm_monitor;
 
     // This function decodes the instruction to determine if it performs a write
     // to the general-purpose register file, mimicking the CPU controller logic.
-    function bit is_gpr_write(logic [31:0] instr);
+    function automatic bit is_gpr_write(logic [31:0] instr);
         logic [6:0] opcode = instr[6:0];
         logic is_r_type = (opcode == 7'b0110011);
         logic is_i_type = (opcode == 7'b0010011) || (opcode == 7'b0000011) || (opcode == 7'b1100111);

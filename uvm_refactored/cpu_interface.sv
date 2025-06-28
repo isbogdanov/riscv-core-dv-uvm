@@ -33,11 +33,11 @@ interface cpu_interface(input logic clock, input logic rst);
         input instruction;
         input current_PC;
         
-        // Memory interface (prepared for future driver output)
-        output mem_read;
-        output mem_write;
-        output address;
-        output mem_write_data;
+        // Memory interface (read by monitor, will be driven by future driver)
+        input mem_read;
+        input mem_write;
+        input address;
+        input mem_write_data;
         input mem_read_data;
         
         // Commit stage monitoring (read-only)

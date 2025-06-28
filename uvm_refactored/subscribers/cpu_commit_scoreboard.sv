@@ -1,10 +1,10 @@
-// uvm_refactored/subscribers/cpu_scoreboard.sv
+// uvm_refactored/subscribers/cpu_commit_scoreboard.sv
 //
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
 
-class cpu_scoreboard extends uvm_scoreboard;
-    `uvm_component_utils(cpu_scoreboard)
+class cpu_commit_scoreboard extends uvm_scoreboard;
+    `uvm_component_utils(cpu_commit_scoreboard)
 
     uvm_tlm_analysis_fifo#(riscv_commit_transaction) checker_fifo;
     
@@ -13,7 +13,7 @@ class cpu_scoreboard extends uvm_scoreboard;
     uvm_event test_done_event;
     bit ecall_detected = 0;
 
-    function new(string name = "cpu_scoreboard", uvm_component parent = null);
+    function new(string name = "cpu_commit_scoreboard", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 

@@ -93,4 +93,14 @@ module uvm_top;
         end
     end
 
+    // TEMPORARY DEBUG: Combinational check to see if mem_read/mem_write are ever asserted.
+    always @(*) begin
+        if (cpu_if_inst.mem_read) begin
+            $display("[DEBUGGER] mem_read asserted at time %t", $time);
+        end
+        if (cpu_if_inst.mem_write) begin
+            $display("[DEBUGGER] mem_write asserted at time %t", $time);
+        end
+    end
+
 endmodule 
