@@ -12,7 +12,7 @@ interface cpu_interface(input logic clock, input logic rst);
     logic [31:0] instruction;
     logic [31:0] current_PC;
     
-    // Memory Interface Signals
+    // Memory Interface Signals (prepared for future driver control)
     logic        mem_read;
     logic        mem_write;
     logic [31:0] address;
@@ -24,19 +24,38 @@ interface cpu_interface(input logic clock, input logic rst);
     logic [4:0]  rd_o;
     logic [31:0] rf_rd_value_o;
 
-    // Clocking block for robust testbench synchronization
+    // Clocking block for UVM components (monitors and future drivers)
+    // This provides consistent timing discipline across all UVM components
     clocking cb @(posedge clock);
-        default input #1step;
+        default input #1step output #1ps;
+        
+        // Instruction interface (read-only for monitors)
         input instruction;
-        output #1ps mem_read_data;
         input current_PC;
-        input mem_read;
-        input mem_write;
-        input address;
-        input mem_write_data;
+        
+        // Memory interface (prepared for future driver output)
+        output mem_read;
+        output mem_write;
+        output address;
+        output mem_write_data;
+        input mem_read_data;
+        
+        // Commit stage monitoring (read-only)
         input reg_write_o;
         input rd_o;
         input rf_rd_value_o;
     endclocking
+
+    // Modport for monitor (passive observation only)
+    modport monitor_mp (
+        clocking cb,
+        input rst
+    );
+    
+    // Modport for future driver (active stimulus generation)
+    modport driver_mp (
+        clocking cb,
+        input rst
+    );
 
 endinterface 

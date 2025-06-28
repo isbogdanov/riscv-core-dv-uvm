@@ -5,11 +5,12 @@
 
 // Passive monitor that observes processor commit stage signals
 // and converts them to UVM transactions for checking
+// Uses clocking block for consistent timing discipline with future drivers
 class cpu_monitor extends uvm_monitor;
 
     `uvm_component_utils(cpu_monitor)
 
-    virtual cpu_interface vif;
+    virtual cpu_interface.monitor_mp vif;
     uvm_analysis_port#(riscv_commit_transaction) item_collected_port;
 
     function new(string name = "cpu_monitor", uvm_component parent = null);
@@ -19,7 +20,7 @@ class cpu_monitor extends uvm_monitor;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db#(virtual cpu_interface)::get(this, "", "vif", vif))
+        if(!uvm_config_db#(virtual cpu_interface.monitor_mp)::get(this, "", "vif", vif))
            `uvm_fatal(get_type_name(), "Could not get virtual interface");
     endfunction
 
@@ -38,6 +39,7 @@ class cpu_monitor extends uvm_monitor;
                 tx = riscv_commit_transaction::type_id::create("tx");
                 
                 // Sample signals through the clocking block for safe timing
+                // This ensures consistent timing with future driver implementations
                 tx.pc = vif.cb.current_PC;
                 tx.instr = vif.cb.instruction;
                 

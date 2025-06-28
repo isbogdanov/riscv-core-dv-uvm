@@ -8,8 +8,6 @@ class cpu_scoreboard extends uvm_scoreboard;
 
     uvm_tlm_analysis_fifo#(riscv_commit_transaction) checker_fifo;
     
-    virtual cpu_interface vif;
-    
     string spike_log_path;
     integer spike_log_fh;
     uvm_event test_done_event;
@@ -21,8 +19,6 @@ class cpu_scoreboard extends uvm_scoreboard;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db#(virtual cpu_interface)::get(this, "", "vif", vif))
-           `uvm_fatal(get_type_name(), "Could not get virtual interface");
         if(!uvm_config_db#(string)::get(this, "", "SPIKE_LOG", spike_log_path))
            `uvm_fatal(get_type_name(), "Could not get SPIKE_LOG path");
         if(!uvm_config_db#(uvm_event)::get(this, "", "test_done_event", test_done_event))

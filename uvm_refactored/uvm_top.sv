@@ -16,13 +16,15 @@ module uvm_top;
     // Instantiate the interface
     cpu_interface cpu_if_inst(clock, rst);
 
-    // Add instruction memory exactly like the working tb_top.sv
+    // Instruction memory - combinational for processor performance
+    // This will remain hardware-driven even with future driver implementation
     instruction_memory instr_mem (
         .address(cpu_if_inst.current_PC[31:0]),
         .instruction(cpu_if_inst.instruction)
     );
 
-    // Add data memory exactly like the working tb_top.sv  
+    // Data memory - synchronous interface, prepared for future driver control
+    // Currently hardware-driven, but interface is ready for UVM driver
     data_memory data_mem (
         .mem_read(cpu_if_inst.mem_read),
         .mem_write(cpu_if_inst.mem_write),
@@ -47,6 +49,7 @@ module uvm_top;
     end
 
     // Instantiate the DUT and connect it to the interface
+    // All connections go through interface for consistent timing discipline
     cpu_top dut (
         .clock(clock),
         .rst(rst),
@@ -77,14 +80,13 @@ module uvm_top;
     // UVM Test Execution
     initial begin
         // Place the interface into the UVM configuration database for all components
-        uvm_config_db#(virtual cpu_interface)::set(null, "uvm_test_top.*", "vif", cpu_if_inst);
+        uvm_config_db#(virtual cpu_interface.monitor_mp)::set(null, "uvm_test_top.*", "vif", cpu_if_inst.monitor_mp);
         
         // Start the UVM test. The test name can be overridden from the command line.
         run_test(); 
     end
 
-    // A separate always block to detect ECALL and report it
-    // Let UVM handle the actual test completion
+    // ECALL detection using interface signals for consistency
     always @(posedge clock) begin
         if (!rst && cpu_if_inst.instruction == 32'h00000073) begin
             $display("ECALL instruction detected at PC=0x%h. Test will complete via UVM.", cpu_if_inst.current_PC);
