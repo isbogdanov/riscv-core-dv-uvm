@@ -1,4 +1,4 @@
-# RISC-V Processor and UVM Verification Environment
+# RISC-V Processor and UVM Verification Environment POS - WORK IN PROGRESS
 
 This repository contains the implementation of a 32-bit RISC-V processor and comprehensive verification environments designed to ensure its correctness. The project showcases two distinct verification methodologies: a script-based approach and a classic UVM implementation.
 
