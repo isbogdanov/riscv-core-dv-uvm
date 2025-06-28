@@ -7,7 +7,7 @@ package riscv_uvm_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    // Include UVM component files
+    // Include UVM component files (passive monitoring only)
     `include "transactions/riscv_commit_transaction.sv"
     `include "monitors/cpu_monitor.sv"
     `include "subscribers/cpu_scoreboard.sv"

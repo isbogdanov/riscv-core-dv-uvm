@@ -43,7 +43,7 @@ riscv-core-dv-uvm/
 ├── RISC-V/                     # RISC-V test generation framework
 │   ├── custom_target/rv32i/    # Custom riscv-dv target configurations
 │   └── riscv-dv/               # RISC-V DV generator (submodule)
-├── uvm_refactored/             # Classic UVM verification environment
+├── uvm_refactored/             # Passive UVM monitoring environment
 │   ├── uvm_top.sv              # UVM testbench top module
 │   ├── cpu_top.sv              # DUT wrapper
 │   ├── cpu_interface.sv        # Interface definitions
@@ -51,6 +51,7 @@ riscv-core-dv-uvm/
 │   ├── transactions/           # Transaction definitions
 │   ├── monitors/               # Monitor implementations
 │   ├── subscribers/            # Scoreboard implementations
+│   ├── agents/                 # Passive agent implementation
 │   ├── env/                    # Environment implementations
 │   └── tests/                  # Test implementations
 ├── uvm_scripted_flow/          # Original script-based UVM approach
@@ -278,7 +279,7 @@ This project implements a verification environment with the following capabiliti
 - **Multi-Seed Constrained-Random Testing**: Fully operational `riscv-dv` integration with up to 20+ seed regression capability
 - **Golden Reference Validation**: Spike ISA simulator provides bit-accurate reference traces with automatic comparison
 - **Advanced Functional Coverage**: Complete QuestaSim coverage collection with 65%+ functional coverage achievement
-- **Classic UVM Implementation**: Standard UVM testbench with monitors, scoreboards, and online checking
+- **Passive UVM Monitoring**: UVM testbench with monitors, scoreboards, and online checking (no stimulus generation)
 - **Formal Property Verification**: SymbiYosys-based mathematical proof of RISC-V arithmetic component correctness
 - **Real Bug Discovery and Analysis**: Documented RISC-V ALU controller bug discovery with complete debugging workflow
 - **Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability  

@@ -3,6 +3,8 @@
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
 
+// Passive monitor that observes processor commit stage signals
+// and converts them to UVM transactions for checking
 class cpu_monitor extends uvm_monitor;
 
     `uvm_component_utils(cpu_monitor)
