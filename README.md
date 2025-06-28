@@ -3,11 +3,6 @@
 This repository contains the implementation of a 32-bit RISC-V processor and a comprehensive UVM-inspired verification environment designed to ensure its correctness.
 
 ## Disclaimer
- The current branch implements a script-based UVM-inspired, automated verification flow. While this flow is designed to support all tests in `testlist.yaml`, its primary purpose is to serve as a learning exercise in UVM rather than a comprehensive verification of the RISC-V core.
-
-
-
-## Disclaimer
 This branch implements a **script-driven, UVM-inspired verification flow**.  
 It is wired to run every test in `testlist.yaml`, but is intended as a **proof-of-concept workflow** rather than a full verification closure of the RISC-V core.
 
@@ -148,7 +143,48 @@ To execute a clean regression run, use the default target:
 ```bash
 make regress
 ```
-This command cleans the workspace, generates a new test with a random seed, compiles it, runs both Spike and the RTL simulation, and compares the results. By default, it runs with `NUM_SEEDS=1`.
+This command cleans the workspace, generates a new test with a random seed, compiles it, runs both Spike and the RTL simulation, and compares the results. By default, it runs with `NUM_SEEDS=1` using the `riscv_arithmetic_basic_test`.
+
+### Running Specific RISC-V DV Tests
+
+The verification environment includes a comprehensive test suite defined in `uvm_env/custom_target/rv32i/testlist.yaml`. You can run any specific test using the `TEST_NAME` variable:
+
+#### Available Tests:
+
+```bash
+# Basic arithmetic test (default)
+TEST_NAME=riscv_arithmetic_basic_test make regress
+
+# Back-to-back jump instruction stress test
+TEST_NAME=riscv_jump_stress_test make regress
+```
+
+#### Advanced Test Usage:
+
+```bash
+# Run specific test with multiple seeds
+TEST_NAME=riscv_arithmetic_basic_test NUM_SEEDS=5 make regress
+
+# Run specific test with coverage collection
+COV_ENABLE=1 TEST_NAME=riscv_jump_stress_test make regress
+
+# Run specific test with preserved seed for debugging
+echo "12345" > logs/seeds.txt
+PRESERVE_SEEDS=1 TEST_NAME=riscv_mmu_stress_test make regress
+
+# Run specific test with both coverage and multiple seeds
+COV_ENABLE=1 NUM_SEEDS=10 TEST_NAME=riscv_rand_instr_test make regress
+```
+
+#### Test Descriptions:
+
+- **`riscv_arithmetic_basic_test`**: Pure arithmetic operations, no branches/loads/stores (PASS)
+- **`riscv_rand_instr_test`**: Comprehensive stress test with mixed instruction types (DO NOT PASS/NOT TESTED)
+- **`riscv_jump_stress_test`**: Heavy jump instruction testing for control flow validation (PARTIAL PASS)
+- **`riscv_loop_test`**: Loop patterns and nested control structures (DO NOT PASS/NOT TESTED)
+- **`riscv_mmu_stress_test`**: Memory subsystem stress with various access patterns (DO NOT PASS/NOT TESTED)
+- **`riscv_illegal_instr_test`**: Exception handling verification (DO NOT PASS/NOT TESTED)
+- **`riscv_full_interrupt_test`**: Complete interrupt/exception flow testing (DO NOT PASS/NOT TESTED) 
 
 ### Running Multi-Seed Regression
 
