@@ -7,6 +7,9 @@ class cpu_env extends uvm_env;
 
     `uvm_component_utils(cpu_env)
 
+    // Configuration object (optional - backwards compatible)
+    riscv_dut_config cfg;
+
     // Agent for monitoring instruction commits
     cpu_commit_agent commit_agent;
     cpu_commit_scoreboard commit_scoreboard;
@@ -24,6 +27,19 @@ class cpu_env extends uvm_env;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        
+        // Get configuration object (optional - backwards compatible)
+        if (!uvm_config_db#(riscv_dut_config)::get(this, "", "cfg", cfg)) begin
+            `uvm_info("ENV", "No configuration object found, using defaults", UVM_LOW)
+            cfg = riscv_dut_config::type_id::create("cfg");
+        end else begin
+            `uvm_info("ENV", "Configuration object received successfully", UVM_MEDIUM)
+            `uvm_info("ENV", $sformatf("  Config active/passive: %s", cfg.is_active.name()), UVM_MEDIUM)
+            `uvm_info("ENV", $sformatf("  Spike log path: %s", cfg.spike_log_path), UVM_MEDIUM)
+        end
+        
+        // Pass configuration to agents
+        uvm_config_db#(riscv_dut_config)::set(this, "*_agent", "cfg", cfg);
         
         // Build the commit-checking components
         commit_agent = cpu_commit_agent::type_id::create("commit_agent", this);

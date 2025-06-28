@@ -7,6 +7,9 @@ package riscv_uvm_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
+    // Configuration
+    `include "config/riscv_dut_config.sv"
+
     // Transactions
     `include "transactions/riscv_commit_transaction.sv"
     `include "transactions/riscv_flow_transaction.sv"

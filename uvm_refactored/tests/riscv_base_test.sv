@@ -8,6 +8,7 @@ class riscv_base_test extends uvm_test;
     `uvm_component_utils(riscv_base_test)
 
     cpu_env env;
+    riscv_dut_config cfg;
     uvm_event test_done_event;
 
     function new(string name = "riscv_base_test", uvm_component parent = null);
@@ -20,6 +21,11 @@ class riscv_base_test extends uvm_test;
         string mem_file_path;
         super.build_phase(phase);
         
+        // Create and configure the DUT configuration object
+        cfg = riscv_dut_config::type_id::create("cfg");
+        cfg.is_active = UVM_PASSIVE;  // Your current passive approach
+        `uvm_info("TEST", "Configuration object created successfully", UVM_MEDIUM)
+        
         env = cpu_env::type_id::create("env", this);
 
         // Get Spike log path for the commit scoreboard
@@ -30,7 +36,33 @@ class riscv_base_test extends uvm_test;
         if (!$value$plusargs("MEM_FILE=%s", mem_file_path))
             `uvm_fatal(get_type_name(), "MEM_FILE plusarg not provided")
 
-        // Set paths and events in the config DB for components to retrieve
+        // Configure the DUT configuration object
+        cfg.spike_log_path = spike_log_path;
+        cfg.mem_file_path = mem_file_path;
+        `uvm_info("TEST", "Configuration paths set successfully", UVM_MEDIUM)
+        
+        // Get virtual interface and assign to configuration  
+        // Interface is set at uvm_test_top level in uvm_top.sv
+        if (!uvm_config_db#(virtual cpu_interface.monitor_mp)::get(this, "*", "vif", cfg.vif)) begin
+            `uvm_fatal(get_type_name(), "Virtual interface not found in config DB")
+        end else begin
+            `uvm_info("TEST", "Virtual interface retrieved and assigned to config", UVM_MEDIUM)
+        end
+        
+        // Validate configuration
+        if (!cfg.is_valid()) begin
+            `uvm_fatal(get_type_name(), "Invalid DUT configuration")
+        end else begin
+            `uvm_info("TEST", "Configuration object validated successfully", UVM_MEDIUM)
+        end
+        
+        // Set configuration object for environment and all its components
+        uvm_config_db#(riscv_dut_config)::set(this, "env*", "cfg", cfg);
+        `uvm_info("TEST", "Configuration object distributed to environment components", UVM_MEDIUM)
+        
+        cfg.print_config();  // Display configuration
+        
+        // Backwards compatibility - keep existing config DB settings
         uvm_config_db#(string)::set(this, "env.commit_scoreboard", "SPIKE_LOG", spike_log_path);
         uvm_config_db#(string)::set(this, "env.flow_predictor", "MEM_FILE", mem_file_path);
         uvm_config_db#(uvm_event)::set(this, "env.commit_scoreboard", "test_done_event", test_done_event);
