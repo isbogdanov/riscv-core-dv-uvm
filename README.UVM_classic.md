@@ -158,10 +158,47 @@ Successful UVM run should show:
 - UVM_INFO messages with zero UVM_ERRORs
 - Clean test completion
 
-## Design Philosophy
+### Example Report Summary (Seed 846056)
 
-This UVM implementation has evolved into an **active verification environment** that provides robust, multi-faceted checking.
+A successful run will end with a UVM report summary indicating zero errors or fatals, like the one below for a test generated with seed `846056`:
 
-- **Controlled Stimulus**: Using a UVM driver to inject instructions provides greater control and observability than a hardware memory module.
-- **Layered Checking**: The flow path provides immediate, cycle-by-cycle feedback on control flow, while the commit path provides definitive, end-to-end validation of architectural correctness.
-- **Focused Verification**: By leveraging the Spike golden model, the `commit_scoreboard` can focus solely on instruction execution correctness without needing to replicate complex prediction logic.
+```
+# --- UVM Report Summary ---
+#
+# ** Report counts by severity
+# UVM_INFO :13278
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [AGENT]     2
+# [CONFIG]     4
+# [DRIVER]     2
+# [ENV]     2
+# [Questa UVM]     2
+# [RNTST]     1
+# [TEST]     7
+# [TEST_DONE]     1
+# [UVM/RELNOTES]     1
+# [cpu_commit_scoreboard]  8832
+# [cpu_flow_predictor]     1
+# [cpu_flow_scoreboard]  4420
+# [riscv_memory_file_sequence]     3
+```
+
+#### Understanding the Report
+
+This summary provides a vital snapshot of the test run's health:
+
+-   **Report counts by severity**: This is the most important section.
+    -   `UVM_INFO`: These are informational messages used for tracing and debugging. A high count is normal and shows the testbench was active.
+    -   `UVM_ERROR`: This indicates a functional mismatch or a check failure. A passing test **must have zero** errors.
+    -   `UVM_FATAL`: This indicates a critical problem that stopped the simulation. A passing test **must have zero** fatal errors.
+
+-   **Report counts by id**: This tells you which component generated the messages.
+    -   A high number of messages from components like `cpu_commit_scoreboard` and `cpu_flow_scoreboard` is a **good sign**. It means thousands of successful checks were performed (e.g., matching the DUT's behavior against the Spike model), confirming the processor's correctness for this specific test.
+    -   The other IDs show that all major components of the testbench (agents, drivers, sequences, environment) were active during the run.
+-   **Report counts by id**: This breaks down the `UVM_INFO` messages by their source component, giving insight into the test's execution.
+    -   `[cpu_commit_scoreboard] 8832`: This high number is the primary indicator of a successful test run. It shows that for every instruction executed, the scoreboard performed multiple checks (e.g., verifying the program counter, instruction opcode, and register write-back data) and all of them matched the Spike golden model.
+    -   `[cpu_flow_scoreboard] 4420`: This number confirms that thousands of successful cycle-by-cycle checks were performed on the program counter's flow, ensuring instructions were fetched correctly.
+    -   The low counts for other components like `[AGENT] (2)`, `[CONFIG] (4)`, and `[TEST] (7)` are also expected. These are typically setup and status messages confirming that the various parts of the UVM environment were built and configured correctly at the start and end of the test. A count of `1` for `[TEST_DONE]` is a key indicator that the test reached its intended conclusion without terminating early.
