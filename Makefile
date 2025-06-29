@@ -119,8 +119,8 @@ smoke: clean elaborate
 
 # Compile UVM refactored implementation only
 uvm_compile:
-	@echo "--- Compiling UVM Refactored implementation ---"
-	@$(VSIM) -c -do "do questa/scripts/compile_uvm_refactored.do"
+	@echo "--- Compiling UVM Classic implementation ---"
+	@$(VSIM) -c -do "do questa/scripts/compile_uvm_classic.do"
 
 # Run a smoke test on the new UVM refactored environment
 uvm_smoke: clean uvm_compile
@@ -151,7 +151,9 @@ uvm_regress: clean uvm_compile gen compile_asm mem_convert spike_sim
 		uvm_top \
 		+UVM_TESTNAME=riscv_base_test \
 		+MEM_FILE="$$MEM_FILE" \
-		+SPIKE_LOG="$$SPIKE_LOG"
+		+SPIKE_LOG="$$SPIKE_LOG"; \
+	echo "--- Moving simulator logs ---"; \
+	mv -f vsim_stacktrace.vstf tr_db.log transcript $(LOG_DIR)/
 
 # Run a debug simulation using a fixed RAM file
 debug_ram: clean elaborate

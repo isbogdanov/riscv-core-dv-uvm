@@ -1,4 +1,4 @@
-// uvm_refactored/monitors/cpu_commit_monitor.sv
+// uvm_classic/monitors/cpu_commit_monitor.sv
 //
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
@@ -10,7 +10,11 @@ class cpu_commit_monitor extends uvm_monitor;
 
     `uvm_component_utils(cpu_commit_monitor)
 
+    // Get the entire config object
+    riscv_dut_config cfg;
+    // Local handle for convenience
     virtual cpu_interface.monitor_mp vif;
+
     uvm_analysis_port#(riscv_commit_transaction) item_collected_port;
 
     function new(string name = "cpu_commit_monitor", uvm_component parent = null);
@@ -20,34 +24,30 @@ class cpu_commit_monitor extends uvm_monitor;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db#(virtual cpu_interface.monitor_mp)::get(this, "", "vif", vif))
-           `uvm_fatal(get_type_name(), "Could not get virtual interface");
+        // Get the config object from the database
+        if(!uvm_config_db#(riscv_dut_config)::get(this, "", "cfg", cfg))
+           `uvm_fatal(get_type_name(), "Could not get configuration object");
+        // Assign the vif from the config object
+        vif = cfg.monitor_vif;
     endfunction
-
-    // A small struct to hold the pipelined data
-    typedef struct {
-        logic [31:0] pc;
-        logic [31:0] instr;
-    } pipeline_item_t;
 
     task run_phase(uvm_phase phase);
         forever begin
-            @(vif.cb);  // Use clocking block for proper sampling timing
+            @(vif.monitor_cb);  // Use the correct clocking block name
             
             if (!vif.rst) begin
                 riscv_commit_transaction tx;
                 tx = riscv_commit_transaction::type_id::create("tx");
                 
                 // Sample signals through the clocking block for safe timing
-                // This ensures consistent timing with future driver implementations
-                tx.pc = vif.cb.current_PC;
-                tx.instr = vif.cb.instruction;
+                tx.pc = vif.monitor_cb.current_PC;
+                tx.instr = vif.monitor_cb.instruction;
                 
-                if (vif.cb.reg_write_o) begin
+                if (vif.monitor_cb.reg_write_o) begin
                     // Instruction with GPR write
                     tx.gpr_write_enable = 1;
-                    tx.rd_addr = vif.cb.rd_o;
-                    tx.rd_data = vif.cb.rf_rd_value_o;
+                    tx.rd_addr = vif.monitor_cb.rd_o;
+                    tx.rd_data = vif.monitor_cb.rf_rd_value_o;
                 end else begin
                     // Instruction without GPR write
                     tx.gpr_write_enable = 0;
@@ -66,17 +66,5 @@ class cpu_commit_monitor extends uvm_monitor;
             end
         end
     endtask
-
-    // This function decodes the instruction to determine if it performs a write
-    // to the general-purpose register file, mimicking the CPU controller logic.
-    function automatic bit is_gpr_write(logic [31:0] instr);
-        logic [6:0] opcode = instr[6:0];
-        logic is_r_type = (opcode == 7'b0110011);
-        logic is_i_type = (opcode == 7'b0010011) || (opcode == 7'b0000011) || (opcode == 7'b1100111);
-        logic is_u_type = (opcode == 7'b0110111) || (opcode == 7'b0010111);
-        logic is_j_type = (opcode == 7'b1101111);
-        logic is_csr_type = (opcode == 7'b1110011);
-        return is_r_type || is_i_type || is_u_type || is_j_type || is_csr_type;
-    endfunction
 
 endclass 

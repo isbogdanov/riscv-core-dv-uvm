@@ -29,10 +29,10 @@ eval "vlog -work work -sv -mfcu $COVERAGE_FLAGS rtl/*.v"
 
 # --- UVM Refactored Environment ---
 echo "--- Compiling UVM Refactored environment files ---"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/cpu_top.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/cpu_interface.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/riscv_uvm_pkg.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/uvm_top.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_classic/cpu_top.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_classic/interfaces/cpu_interface.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_classic/riscv_uvm_pkg.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_classic/uvm_top.sv"
 
 echo "--- UVM Refactored compilation finished ---"
 quit 

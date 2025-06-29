@@ -7,7 +7,7 @@ This repository contains the implementation of a 32-bit RISC-V processor and com
 This project demonstrates two complementary verification approaches:
 
 1. **Script-Based Verification Flow**: A robust, Python-driven regression system with offline trace comparison
-2. **Classic UVM Approach**: A standard UVM testbench with online checking and scoreboarding
+2. **Classic UVM Approach**: An active UVM testbench that drives stimulus and uses a dual-path architecture with online checking and a Spike-based scoreboard.
 
 For detailed information about the UVM classic implementation, see [README.UVM_classic.md](README.UVM_classic.md).
 
@@ -43,7 +43,7 @@ riscv-core-dv-uvm/
 ├── RISC-V/                     # RISC-V test generation framework
 │   ├── custom_target/rv32i/    # Custom riscv-dv target configurations
 │   └── riscv-dv/               # RISC-V DV generator (submodule)
-├── uvm_refactored/             # Passive UVM monitoring environment
+├── uvm_classic/             # Classic UVM monitoring environment
 │   ├── uvm_top.sv              # UVM testbench top module
 │   ├── cpu_top.sv              # DUT wrapper
 │   ├── cpu_interface.sv        # Interface definitions
@@ -83,7 +83,7 @@ riscv-core-dv-uvm/
 ├── questa/                     # QuestaSim-specific scripts and configurations
 │   └── scripts/
 │       ├── compile.do          # Script-based compilation
-│       └── compile_uvm_refactored.do # UVM compilation
+│       └── compile_uvm_classic.do # UVM compilation
 ├── original_code/              # Original RTL and testbench files for reference
 ├── environment.yml             # Conda environment specification
 ├── env.example                 # Environment variable template
@@ -279,7 +279,7 @@ This project implements a verification environment with the following capabiliti
 - **Multi-Seed Constrained-Random Testing**: Fully operational `riscv-dv` integration with up to 20+ seed regression capability
 - **Golden Reference Validation**: Spike ISA simulator provides bit-accurate reference traces with automatic comparison
 - **Advanced Functional Coverage**: Complete QuestaSim coverage collection with 65%+ functional coverage achievement
-- **Passive UVM Monitoring**: UVM testbench with monitors, scoreboards, and online checking (no stimulus generation)
+- **Active UVM Environment**: UVM testbench with active stimulus generation, drivers, monitors, and scoreboards.
 - **Formal Property Verification**: SymbiYosys-based mathematical proof of RISC-V arithmetic component correctness
 - **Real Bug Discovery and Analysis**: Documented RISC-V ALU controller bug discovery with complete debugging workflow
 - **Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability  

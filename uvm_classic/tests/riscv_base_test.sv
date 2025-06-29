@@ -1,4 +1,4 @@
-// uvm_refactored/tests/riscv_base_test.sv
+// uvm_classic/tests/riscv_base_test.sv
 //
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
@@ -21,48 +21,39 @@ class riscv_base_test extends uvm_test;
         string mem_file_path;
         super.build_phase(phase);
         
-        // Create and configure the DUT configuration object
         cfg = riscv_dut_config::type_id::create("cfg");
-        cfg.is_active = UVM_PASSIVE;  // Your current passive approach
         `uvm_info("TEST", "Configuration object created successfully", UVM_MEDIUM)
         
         env = cpu_env::type_id::create("env", this);
 
-        // Get Spike log path for the commit scoreboard
         if (!$value$plusargs("SPIKE_LOG=%s", spike_log_path))
             `uvm_fatal(get_type_name(), "SPIKE_LOG plusarg not provided")
         
-        // Get memory file path for the flow predictor
         if (!$value$plusargs("MEM_FILE=%s", mem_file_path))
             `uvm_fatal(get_type_name(), "MEM_FILE plusarg not provided")
 
-        // Configure the DUT configuration object
         cfg.spike_log_path = spike_log_path;
         cfg.mem_file_path = mem_file_path;
         `uvm_info("TEST", "Configuration paths set successfully", UVM_MEDIUM)
         
-        // Get virtual interface and assign to configuration  
-        // Interface is set at uvm_test_top level in uvm_top.sv
-        if (!uvm_config_db#(virtual cpu_interface.monitor_mp)::get(this, "*", "vif", cfg.vif)) begin
-            `uvm_fatal(get_type_name(), "Virtual interface not found in config DB")
-        end else begin
-            `uvm_info("TEST", "Virtual interface retrieved and assigned to config", UVM_MEDIUM)
-        end
-        
-        // Validate configuration
+        if (!uvm_config_db#(virtual cpu_interface.monitor_mp)::get(this, "*", "monitor_vif", cfg.monitor_vif))
+            `uvm_fatal(get_type_name(), "Monitor virtual interface not found in config DB")
+        if(!uvm_config_db#(virtual cpu_interface.driver_mp)::get(this, "*", "driver_vif", cfg.driver_vif))
+            `uvm_fatal(get_type_name(), "Driver virtual interface not found in config DB")
+        `uvm_info("TEST", "Virtual interfaces retrieved and assigned to config", UVM_MEDIUM)
+
         if (!cfg.is_valid()) begin
             `uvm_fatal(get_type_name(), "Invalid DUT configuration")
         end else begin
             `uvm_info("TEST", "Configuration object validated successfully", UVM_MEDIUM)
         end
         
-        // Set configuration object for environment and all its components
         uvm_config_db#(riscv_dut_config)::set(this, "env*", "cfg", cfg);
         `uvm_info("TEST", "Configuration object distributed to environment components", UVM_MEDIUM)
         
-        cfg.print_config();  // Display configuration
+        cfg.print_config();
         
-        // Backwards compatibility - keep existing config DB settings
+        // Backwards compatibility
         uvm_config_db#(string)::set(this, "env.commit_scoreboard", "SPIKE_LOG", spike_log_path);
         uvm_config_db#(string)::set(this, "env.flow_predictor", "MEM_FILE", mem_file_path);
         uvm_config_db#(uvm_event)::set(this, "env.commit_scoreboard", "test_done_event", test_done_event);
@@ -71,15 +62,26 @@ class riscv_base_test extends uvm_test;
 
     function void end_of_elaboration_phase(uvm_phase phase);
         super.end_of_elaboration_phase(phase);
-        // Set verbosity levels for the scoreboards to see MATCH messages.
         env.commit_scoreboard.set_report_verbosity_level(UVM_HIGH);
         env.flow_scoreboard.set_report_verbosity_level(UVM_HIGH);
     endfunction
 
     virtual task run_phase(uvm_phase phase);
+        riscv_memory_file_sequence memory_seq;
+
         phase.raise_objection(this, "Starting RISC-V Test");
+        
+        memory_seq = riscv_memory_file_sequence::type_id::create("memory_seq");
+        memory_seq.memory_file_path = cfg.mem_file_path;
+        
+        `uvm_info("TEST", $sformatf("Starting memory file sequence with file: %s", cfg.mem_file_path), UVM_MEDIUM)
+        
+        memory_seq.start(env.flow_agent.sequencer);
+        
+        `uvm_info("TEST", "Memory file sequence completed, waiting for test completion", UVM_MEDIUM)
+
         test_done_event.wait_on();
-        #100ns; // Add a small delay for final transactions to settle
+        #100ns;
         phase.drop_objection(this, "Test finished (ECALL or Spike log end)");
     endtask
 
