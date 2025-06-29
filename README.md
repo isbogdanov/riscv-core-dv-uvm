@@ -73,13 +73,19 @@ riscv-core-dv-uvm/
 │   ├── waveform_before_fix.png # Visual evidence of bug manifestation
 │   ├── waveform_after_fix.png  # Visual evidence of successful fix
 │   └── *.log/*.vcd             # Complete reproduction data and traces
-├── sample_logs/                # Example regression run artifacts and coverage data
-│   ├── coverage/               # Sample coverage databases and HTML reports
-│   ├── formal_proof/           # Sample formal verification results
-│   ├── out_*/                  # Sample test output directory
+├── sample_logs/                # Example artifacts for each verification flow
 │   ├── example_wave.png        # Sample waveform screenshot
-│   ├── run.log                 # Sample regression execution log
-│   └── waves.vcd               # Sample waveform capture files
+│   ├── formal_proof/
+│   │   └── pc_x0.log
+│   ├── uvm_classic/
+│   │   ├── coverage/           # Coverage reports for the classic flow
+│   │   ├── out_*/              # Test outputs for the classic flow
+│   │   └── uvm_run.log         # Combined regression log for classic flow
+│   └── uvm_scripted/
+│       ├── coverage/           # Coverage reports for the scripted flow
+│       ├── out_*/              # Test outputs for the scripted flow
+│       ├── run.log             # Main regression log for scripted flow
+│       └── waves.vcd           # Waveform file from scripted flow
 ├── questa/                     # QuestaSim-specific scripts and configurations
 │   └── scripts/
 │       ├── compile.do          # Script-based compilation
