@@ -1,0 +1,2 @@
+var g_data = {"33":{"st":"inst","pa":0,"n":"/riscv_uvm_pkg","l":"SystemVerilog","sn":2,"du":{"n":"work.riscv_uvm_pkg","s":2,"b":1},"bc":[{"n":"riscv_uvm_pkg","s":33,"z":1}],"loc":{"cp":24.36,"data":{"s":[583,225,1],"b":[563,122,1],"fc":[78,10,1]}}},"2":{"st":"du","pa":0,"n":"work.riscv_uvm_pkg","l":"SystemVerilog","sn":2,"one_inst":33,"loc":{"cp":24.36,"data":{"s":[583,225,1],"b":[563,122,1],"fc":[78,10,1]}}}};
+processSummaryData(g_data);
