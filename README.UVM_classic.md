@@ -89,7 +89,7 @@ echo "846056" > logs/seeds.txt
 PRESERVE_SEEDS=1 make uvm_regress
 ```
 
-## Project Structure
+## UVM_classic Testbench Structure
 
 The `uvm_classic` directory is organized by UVM component type:
 
@@ -138,11 +138,6 @@ uvm_classic/
     ├── riscv_flow_transaction.sv        # For PC data from flow_monitor to flow_scoreboard
     └── riscv_commit_transaction.sv      # For commit data from commit_monitor to commit_scoreboard
 ```
-
-### Traditional Script-Based Approach
-- `uvm_scripted_flow/tb_top.sv` - Original working script-based testbench
-- `uvm_scripted_flow/cpu_top.sv` - Original DUT wrapper
-
 ## Environment Requirements
 
 Ensure these environment variables are set (in `.env` file):
@@ -200,5 +195,5 @@ This summary provides a vital snapshot of the test run's health:
     -   The other IDs show that all major components of the testbench (agents, drivers, sequences, environment) were active during the run.
 -   **Report counts by id**: This breaks down the `UVM_INFO` messages by their source component, giving insight into the test's execution.
     -   `[cpu_commit_scoreboard] 8832`: This high number is the primary indicator of a successful test run. It shows that for every instruction executed, the scoreboard performed multiple checks (e.g., verifying the program counter, instruction opcode, and register write-back data) and all of them matched the Spike golden model.
-    -   `[cpu_flow_scoreboard] 4420`: This number confirms that thousands of successful cycle-by-cycle checks were performed on the program counter's flow, ensuring instructions were fetched correctly.
+    -   `[cpu_flow_scoreboard] 4420`: This number confirms that successful cycle-by-cycle checks were performed on the program counter's flow, ensuring instructions were fetched correctly.
     -   The low counts for other components like `[AGENT] (2)`, `[CONFIG] (4)`, and `[TEST] (7)` are also expected. These are typically setup and status messages confirming that the various parts of the UVM environment were built and configured correctly at the start and end of the test. A count of `1` for `[TEST_DONE]` is a key indicator that the test reached its intended conclusion without terminating early.
