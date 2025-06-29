@@ -34,11 +34,5 @@ eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flo
 eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/cpu_checker_if.sv"
 eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/tb_top.sv"
 
-# --- UVM Refactored Environment ---
-echo "--- Compiling UVM Refactored environment files ---"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/cpu_interface.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/riscv_uvm_pkg.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_refactored/uvm_top.sv"
-
 echo "--- Compilation finished ---"
 quit 

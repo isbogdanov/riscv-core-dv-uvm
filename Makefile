@@ -131,29 +131,52 @@ uvm_smoke: clean uvm_compile
 		uvm_top \
 		+UVM_TESTNAME=riscv_base_test
 
+# Elaborate the UVM design for simulation
+uvm_elaborate: clean uvm_compile
+	@echo "--- Elaborating the UVM design ---"
+	@if [ "$(COV_ENABLE)" = "1" ]; then \
+		echo "Coverage is enabled"; \
+		$(VSIM) -c -do "vopt +acc +cover=sbfec -o uvm_regress_top -work work uvm_top; quit"; \
+	else \
+		echo "Coverage is disabled"; \
+		$(VSIM) -c -do "vopt +acc -o uvm_regress_top -work work uvm_top; quit"; \
+	fi
+
 # Run a UVM regression using a generated test program
-uvm_regress: clean uvm_compile gen compile_asm mem_convert spike_sim
+uvm_regress: uvm_elaborate gen compile_asm mem_convert spike_sim
 	@echo "--- Running UVM regression ---"; \
-	echo "--- DEBUG: Listing generated files before search ---"; \
-	ls -R out_*; \
-	echo "--- DEBUG: End of file listing ---"; \
-	MEM_FILE=$$(find out_*/asm_test -name "*.o.mem" -print -quit); \
-	SPIKE_LOG=$$(find out_*/spike_sim -name "*.log" -print -quit); \
-	if [ -z "$$MEM_FILE" ] || [ -z "$$SPIKE_LOG" ]; then \
-		echo "Error: Could not find a .mem or spike.log file. Please check previous steps."; \
+	if [ ! -f "$(SEED_FILE)" ]; then \
+		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
 		exit 1; \
 	fi; \
-	echo "Found memory file: $$MEM_FILE"; \
-	echo "Found spike log: $$SPIKE_LOG"; \
-	$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi \
-		-cpppath $(HOST_CC_PATH) \
-		-do "run -all; quit" \
-		uvm_top \
-		+UVM_TESTNAME=riscv_base_test \
-		+MEM_FILE="$$MEM_FILE" \
-		+SPIKE_LOG="$$SPIKE_LOG"; \
-	echo "--- Moving simulator logs ---"; \
-	mv -f vsim_stacktrace.vstf tr_db.log transcript $(LOG_DIR)/
+	SEEDS=$$(cat $(SEED_FILE)); \
+	for SEED in $$SEEDS; do \
+		echo "--- Running test for SEED=$$SEED ---"; \
+		MEM_FILE=$$(find out_*/asm_test -name "*_$$SEED.o.mem" -print -quit); \
+		SPIKE_LOG=$$(find out_*/spike_sim -name "*_$$SEED.log" -print -quit); \
+		if [ -z "$$MEM_FILE" ] || [ -z "$$SPIKE_LOG" ]; then \
+			echo "Error: Could not find files for SEED=$$SEED. Please check previous steps."; \
+			exit 1; \
+		fi; \
+		echo "Found memory file: $$MEM_FILE"; \
+		echo "Found spike log: $$SPIKE_LOG"; \
+		VSIM_CMD="$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi "; \
+		DO_FILE_CONTENT=""; \
+		if [ "$(COV_ENABLE)" = "1" ]; then \
+			echo "Coverage enabled for simulation run."; \
+			mkdir -p $(COV_DIR); \
+			VSIM_CMD="$$VSIM_CMD -coverage"; \
+			DO_FILE_CONTENT="coverage save -onexit -testname uvm_test_$$SEED $(COV_DIR)/sim_$$SEED.ucdb; "; \
+		fi; \
+		DO_FILE_CONTENT="$$DO_FILE_CONTENT run -all; quit"; \
+		VSIM_CMD="$$VSIM_CMD -cpppath $(HOST_CC_PATH) uvm_regress_top -do \"$$DO_FILE_CONTENT\" +UVM_TESTNAME=riscv_base_test +MEM_FILE=$$MEM_FILE +SPIKE_LOG=$$SPIKE_LOG"; \
+		echo "Executing: $$VSIM_CMD"; \
+		eval "$$VSIM_CMD" | tee -a $(LOG_DIR)/uvm_run.log; \
+	done
+	@echo "--- Moving simulator logs ---"; \
+	for f in vsim_stacktrace.vstf tr_db.log transcript; do \
+		if [ -f "$$f" ]; then mv -f "$$f" "$(LOG_DIR)/"; fi; \
+	done
 
 # Run a debug simulation using a fixed RAM file
 debug_ram: clean elaborate
