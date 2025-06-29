@@ -52,9 +52,6 @@ class riscv_memory_file_sequence extends uvm_sequence#(riscv_instruction_transac
     endtask
 endclass
 
-// Base sequence for the instruction driver.
-// This sequence allows the driver to run without sending sequence items,
-// which is appropriate for our memory-file-driven approach.
 class riscv_driving_base_sequence extends uvm_sequence#(riscv_instruction_transaction);
     `uvm_object_utils(riscv_driving_base_sequence)
 

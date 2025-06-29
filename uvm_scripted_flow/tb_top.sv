@@ -1,9 +1,6 @@
 `timescale 1ns / 1ps
 `include "uvm_macros.svh"
 
-// This is the main UVM testbench top module. It instantiates the DUT
-// and the interface that connects it to the UVM verification components.
-//
 // Copyright (c) 2025 Igor Bogdanov
 // All rights reserved.
 
@@ -11,11 +8,9 @@ module tb_top;
 
     import uvm_pkg::*;
 
-    // Simple clock and reset logic
     logic clock;
     logic rst;
 
-    // DUT signals
     wire [31:0] instruction;
     wire [31:0] current_PC;
     wire  mem_read;
@@ -29,7 +24,6 @@ module tb_top;
 
     integer trace_file;
 
-    // Instantiate the memories
     instruction_memory instr_mem (
         .address(current_PC[31:0]),
         .instruction(instruction)
@@ -49,7 +43,6 @@ module tb_top;
         string trace_log;
         string ram_init_file;
 
-        // Get ELF file and trace log path from simulator arguments
         if ($value$plusargs("ram_init_file=%s", ram_init_file)) begin
             $display("[TB] Loading RAM init file: %s", ram_init_file);
             $readmemb(ram_init_file, instr_mem.RAM);
@@ -62,7 +55,6 @@ module tb_top;
             trace_file = $fopen("rtl_trace.log", "w");
         end
 
-        // Enable waveform dumping for debug using standard Verilog commands
         $dumpfile("logs/waves.vcd");
         $dumpvars(0, tb_top);
     end
@@ -76,12 +68,11 @@ module tb_top;
         rst = 1;
         @(posedge clock);
         rst = 0;
-        #40000; // Increased simulation time for longer tests
+        #40000;
         $fclose(trace_file);
         $finish;
     end
 
-    // DUT instantiation
     cpu_top dut (
         .clock(clock),
         .rst(rst),
@@ -97,36 +88,29 @@ module tb_top;
         .rf_rd_value_o(rf_rd_value_o)
     );
 
-    // This block will write the trace of retired instructions to the log file.
     always @(posedge clock) begin
         if (!rst) begin
             if (reg_write_o) begin
-                // Format for instructions with a GPR write (matches Spike's --log-commits)
-                // The key is having "x%0d" with no space to match Spike's format.
                 $fdisplay(trace_file, "core   0: 3 0x%08h (0x%08h) x%0d 0x%08h",
                           current_PC, instruction, rd_o, rf_rd_value_o);
             end else begin
-                // Format for instructions without a GPR write (branches, stores, etc.)
                 $fdisplay(trace_file, "core   0: 0x%08h (0x%08h)",
                           current_PC, instruction);
             end
         end
     end
 
-    // A separate always block to detect ECALL and terminate the simulation.
     always @(posedge clock) begin
         if (!rst && instruction == 32'h00000073) begin
-            // Log the ecall to ensure it's captured before finishing
             $fdisplay(trace_file, "core   0: 3 0x%08h (0x%08h)",
                       current_PC, instruction);
             $display("ECALL instruction detected at PC=0x%h. Finishing simulation.", current_PC);
-            #10; // Allow time for the message to be written
+            #10;
             $fclose(trace_file);
             $finish;
         end
     end
 
-    // Bind the assertion-checker interface to the cpu_top module
     bind cpu_top cpu_checker_if checker_if_inst (
         .clock(clock),
         .rst(rst),
