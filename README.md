@@ -1,21 +1,18 @@
-# RISC-V Processor and UVM Verification Environment
+# RISC-V Processor and UVM Verification Environment POS - WORK IN PROGRESS
 
-This repository contains the implementation of a 32-bit RISC-V processor and a comprehensive UVM-inspired verification environment designed to ensure its correctness.
+This repository contains the implementation of a 32-bit RISC-V processor and comprehensive verification environments designed to ensure its correctness. The project showcases two distinct verification methodologies: a script-based approach and a classic UVM implementation.
 
-## Disclaimer
-This branch implements a **script-driven, UVM-inspired verification flow**.  
-It is wired to run every test in `testlist.yaml`, but is intended as a **proof-of-concept workflow** rather than a full verification closure of the RISC-V core.
+## Verification Methodologies
 
-To demonstrate the workflow, the environment currently focuses on the `riscv_arithmetic_basic_test`. Full validation using the complete test suite is planned for future work.
+This project demonstrates two complementary verification approaches:
 
-For a more conventional, class-based UVM implementation attempt, please see the [UVM-classic-approach branch](https://github.com/isbogdanov/riscv-core-dv-uvm/tree/UVM-classic-approach).
+1. **Script-Based Verification Flow**: A robust, Python-driven regression system with offline trace comparison
+2. **Classic UVM Approach**: An active UVM testbench that drives stimulus and uses a dual-path architecture with online checking and a Spike-based scoreboard.
 
-> **Branch scope**  
-> *main* = fast CI-friendly regression (riscv-dv, Spike compare, coverage 88 %).  
-> *UVM-classic-approach* = class-based reusable UVM env + in-sim scoreboard + formal hooks.
+It is wired to run every test in `testlist.yaml`, but is intended as a **proof-of-concept workflow** rather than a full verification closure of the RISC-V core. To demonstrate the workflow of both approaches, the environment currently focuses on the `riscv_arithmetic_basic_test`. Full validation using the complete test suite is planned for future work.
 
 
-
+For detailed information about the UVM classic implementation, see [README.UVM_classic.md](README.UVM_classic.md).
 
 ## Core Architecture
 
@@ -32,57 +29,76 @@ The processor is a single-cycle implementation of the **RV32I base integer instr
 
 ## Project Structure
 
-The repository is organized to support a complete verification workflow, from simulation and coverage analysis to formal verification and bug tracking:
+The repository is organized to support multiple verification workflows, from script-based regression to UVM-based verification:
 
 ```
 riscv-core-dv-uvm/
-├── rtl/                    # All processor RTL files (processor.v, ALU.v, etc.)
-├── uvm_env/                # UVM verification environment
-│   ├── cpu_top.sv          # DUT wrapper with formal properties
-│   ├── tb_top.sv           # Main UVM testbench top module
-│   ├── cpu_checker_if.sv   # SystemVerilog assertions for run-time checking
-│   ├── custom_target/      # Custom riscv-dv target configurations
-│   └── riscv-dv/           # RISC-V DV generator (submodule)
-├── scripts/                # Python automation scripts
-│   ├── gen_seeds.py        # Random seed generation
-│   ├── run_regression.py   # Test generation orchestration
-│   ├── compile_assembly.py # Assembly compilation to ELF
-│   ├── run_spike.py        # Spike reference simulation
-│   ├── run_simulation.py   # RTL simulation and comparison
-│   ├── rtl_log_to_csv.py   # Log format conversion
-│   └── bin_conv.py         # Binary to Verilog memory format
-├── coverage/               # Functional coverage infrastructure
-│   ├── sim_*.ucdb          # Individual simulation coverage databases
-│   ├── merged.ucdb         # Merged coverage database
-│   ├── coverage.json       # JSON coverage summary (≥60% functional)
-│   └── html/               # Detailed HTML coverage reports
-├── formal_proof/           # SymbiYosys formal verification (adder properties)
-├── bug_story/              # Real bug discovery analysis and documentation
-│   ├── BUG.md              # Comprehensive technical bug analysis report
+├── rtl/                        # All processor RTL files (processor.v, ALU.v, etc.)
+├── scripts/                    # Python automation scripts
+│   ├── gen_seeds.py            # Random seed generation
+│   ├── run_regression.py       # Test generation orchestration
+│   ├── compile_assembly.py     # Assembly compilation to ELF
+│   ├── run_spike.py            # Spike reference simulation
+│   ├── run_simulation.py       # RTL simulation and comparison
+│   ├── rtl_log_to_csv.py       # Log format conversion
+│   ├── bin_conv.py             # Binary to Verilog memory format
+│   └── merge_cov.py            # Coverage database merging
+├── RISC-V/                     # RISC-V test generation framework
+│   ├── custom_target/rv32i/    # Custom riscv-dv target configurations
+│   └── riscv-dv/               # RISC-V DV generator (submodule)
+├── uvm_classic/             # Classic UVM monitoring environment
+│   ├── uvm_top.sv              # UVM testbench top module
+│   ├── cpu_top.sv              # DUT wrapper
+│   ├── cpu_interface.sv        # Interface definitions
+│   ├── riscv_uvm_pkg.sv        # UVM package with all classes
+│   ├── transactions/           # Transaction definitions
+│   ├── monitors/               # Monitor implementations
+│   ├── subscribers/            # Scoreboard implementations
+│   ├── agents/                 # Passive agent implementation
+│   ├── env/                    # Environment implementations
+│   └── tests/                  # Test implementations
+├── uvm_scripted_flow/          # Original script-based UVM approach
+│   ├── tb_top.sv               # Script-based testbench
+│   ├── cpu_top.sv              # DUT wrapper
+│   └── cpu_checker_if.sv       # SystemVerilog assertions
+├── uvm_basic_scaffolding/      # Basic UVM template structure
+├── coverage/                   # Functional coverage infrastructure (generated)
+│   ├── sim_*.ucdb              # Individual simulation coverage databases
+│   ├── merged.ucdb             # Merged coverage database
+│   ├── coverage.json           # JSON coverage summary (≥60% functional)
+│   └── html/                   # Detailed HTML coverage reports
+├── formal_proof/               # SymbiYosys formal verification
+│   ├── pc_x0_formal.sv         # Formal properties for adder
+│   ├── pc_x0.sby               # SymbiYosys configuration
+│   └── pc_x0/                  # Formal verification results
+├── bug_story/                  # Real bug discovery analysis and documentation
+│   ├── BUG.md                  # Comprehensive technical bug analysis report
 │   ├── waveform_before_fix.png # Visual evidence of bug manifestation
 │   ├── waveform_after_fix.png  # Visual evidence of successful fix
-│   └── *.log/*.vcd         # Complete reproduction data and traces
-├── sample_logs/            # Example regression run artifacts and coverage data
-│   ├── coverage/           # Sample coverage databases and HTML reports
-│   ├── formal_proof/       # Sample formal verification results
-│   ├── out_*/              # Sample test output directory
-│   ├── example_wave.png    # Sample waveform screenshot
-│   ├── run.log             # Sample regression execution log
-│   ├── seeds.txt           # Sample test seeds
-│   └── waves.vcd           # Sample waveform capture files
-├── out_*/                  # Current test run outputs (generated)
-│   ├── asm_test/           # Generated assembly tests and ELF files
-│   ├── spike_sim/          # Spike reference simulation logs
-│   ├── *.csv               # Trace comparison files
-│   └── *.log               # Simulation trace logs
-├── work/                   # QuestaSim compilation workspace (generated)
-├── questa/                 # QuestaSim-specific scripts and configurations
-├── original_code/          # Original RTL and testbench files for reference
-├── ci/                     # CI configurations (not yet implemented)
-├── environment.yml         # Conda environment specification
-├── env.example             # Environment variable template
-├── Makefile                # Build automation and regression targets
-└── README.md               # This file
+│   └── *.log/*.vcd             # Complete reproduction data and traces
+├── sample_logs/                # Example artifacts for each verification flow
+│   ├── example_wave.png        # Sample waveform screenshot
+│   ├── formal_proof/
+│   │   └── pc_x0.log
+│   ├── uvm_classic/
+│   │   ├── coverage/           # Coverage reports for the classic flow
+│   │   ├── out_*/              # Test outputs for the classic flow
+│   │   └── uvm_run.log         # Combined regression log for classic flow
+│   └── uvm_scripted/
+│       ├── coverage/           # Coverage reports for the scripted flow
+│       ├── out_*/              # Test outputs for the scripted flow
+│       ├── run.log             # Main regression log for scripted flow
+│       └── waves.vcd           # Waveform file from scripted flow
+├── questa/                     # QuestaSim-specific scripts and configurations
+│   └── scripts/
+│       ├── compile.do          # Script-based compilation
+│       └── compile_uvm_classic.do # UVM compilation
+├── original_code/              # Original RTL and testbench files for reference
+├── environment.yml             # Conda environment specification
+├── env.example                 # Environment variable template
+├── Makefile                    # Build automation and regression targets
+├── README.md                   # This file
+└── README.UVM_classic.md       # UVM classic approach documentation
 ```
 
 ## Getting Started
@@ -120,8 +136,8 @@ Before running any simulations, you must install the necessary tools and set up 
 
 1.  **Clone the repository and initialize submodules:**
     ```bash
-    git clone git@github.com:isbogdanov/riscv-core-dv-uvm.git
-    cd riscv-core-dv-uvm
+    git clone <repository-url>
+    cd amd-dv-sprint
     git submodule update --init --recursive
     ```
 
@@ -137,7 +153,11 @@ Before running any simulations, you must install the necessary tools and set up 
     cp env.example .env
     ```
 
-### Running the Regression
+## Verification Approaches
+
+### Script-Based Verification (Primary)
+
+#### Running the Regression
 
 To execute a clean regression run, use the default target:
 ```bash
@@ -186,7 +206,7 @@ COV_ENABLE=1 NUM_SEEDS=10 TEST_NAME=riscv_rand_instr_test make regress
 - **`riscv_illegal_instr_test`**: Exception handling verification (DO NOT PASS/NOT TESTED)
 - **`riscv_full_interrupt_test`**: Complete interrupt/exception flow testing (DO NOT PASS/NOT TESTED) 
 
-### Running Multi-Seed Regression
+#### Running Multi-Seed Regression
 
 To run regression with multiple random seeds for more comprehensive testing:
 ```bash
@@ -194,7 +214,7 @@ NUM_SEEDS=10 make regress
 ```
 This will generate and run 10 different test cases with unique random seeds. The regression passes only if **all** seeds pass their trace comparison.
 
-### Advanced Multi-Seed Capabilities
+#### Advanced Multi-Seed Capabilities
 
 The verification environment includes sophisticated multi-seed test management:
 
@@ -216,17 +236,23 @@ COV_ENABLE=1 PRESERVE_SEEDS=1 make regress
 make cov
 ```
 
-**Coverage Analysis on Preserved Seeds:**
-```bash
-# Run same test set with coverage (deterministic results)
-COV_ENABLE=1 PRESERVE_SEEDS=1 make regress
-```
+### UVM Classic Verification
 
-**Seed Management Best Practices:**
-- Each seed generates unique assembly tests with different instruction patterns
-- Seed-specific ELF files ensure true test diversity
-- Golden reference traces are generated per-seed for accurate comparison
-- Coverage databases maintain seed-specific test names for proper aggregation
+The project includes a complete UVM classic implementation. For detailed usage instructions, see [README.UVM_classic.md](README.UVM_classic.md).
+
+**Quick Start:**
+```bash
+# UVM smoke test (no external test program)
+make uvm_smoke
+
+# UVM regression with generated test program
+make uvm_regress
+
+# UVM with specific seed
+mkdir -p logs
+echo "846056" > logs/seeds.txt
+PRESERVE_SEEDS=1 make uvm_regress
+```
 
 ### Running with Coverage
 
@@ -296,6 +322,7 @@ This project implements a verification environment with the following capabiliti
 - **Multi-Seed Constrained-Random Testing**: Fully operational `riscv-dv` integration with up to 20+ seed regression capability
 - **Golden Reference Validation**: Spike ISA simulator provides bit-accurate reference traces with automatic comparison
 - **Advanced Functional Coverage**: Complete QuestaSim coverage collection with 65%+ functional coverage achievement
+- **Active UVM Environment**: UVM testbench with active stimulus generation, drivers, monitors, and scoreboards.
 - **Formal Property Verification**: SymbiYosys-based mathematical proof of RISC-V arithmetic component correctness
 - **Real Bug Discovery and Analysis**: Documented RISC-V ALU controller bug discovery with complete debugging workflow
 - **Bug Tracking**: Comprehensive bug story documentation with waveform evidence and reproduction capability  

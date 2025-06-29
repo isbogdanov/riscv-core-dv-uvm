@@ -29,10 +29,10 @@ eval "vlog -work work -sv -mfcu $COVERAGE_FLAGS rtl/*.v"
 
 # vlog -work work -sv -mfcu /AI/hardware/projects/xilinx/SYSC4310/verilog/lab3/lab3.srcs/sources_1/new/*.v
 
-echo "--- Compiling UVM environment files ---"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_top.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/cpu_checker_if.sv"
-eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_env/tb_top.sv"
+echo "--- Compiling UVM scripted flow files ---"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/cpu_top.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/cpu_checker_if.sv"
+eval "vlog -work work -sv +incdir+$UVM_HOME/src $COVERAGE_FLAGS uvm_scripted_flow/tb_top.sv"
 
 echo "--- Compilation finished ---"
 quit 

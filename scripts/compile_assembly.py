@@ -32,7 +32,7 @@ def find_output_directory():
 
 def check_linker_script():
     """Check if the linker script exists"""
-    linker_script = "uvm_env/custom_target/rv32i/link.ld"
+    linker_script = "RISC-V/custom_target/rv32i/link.ld"
     if not os.path.exists(linker_script):
         print(f"Error: Linker script not found at {linker_script}", file=sys.stderr)
         sys.exit(1)
@@ -49,7 +49,7 @@ def compile_assembly_files(out_dir, linker_script):
     cc = f"{riscv_prefix}-gcc"
 
     # Build compiler flags
-    includes = "-Iuvm_env/riscv-dv/src -Iuvm_env/riscv-dv/user_extension"
+    includes = "-IRISC-V/riscv-dv/src -IRISC-V/riscv-dv/user_extension"
     cflags = [
         f"-march={target_arch}",
         f"-mabi={target_abi}",

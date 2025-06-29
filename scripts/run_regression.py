@@ -76,10 +76,10 @@ def run_test_generation(seeds):
     os.chdir(root_dir)
 
     # Path to the riscv-dv runner
-    riscv_dv_run = os.path.join("uvm_env", "riscv-dv", "run.py")
+    riscv_dv_run = os.path.join("RISC-V", "riscv-dv", "run.py")
 
     # Path to the python generator source, which needs to be in the PYTHONPATH
-    pygen_src_path = os.path.join(root_dir, "uvm_env", "riscv-dv", "pygen")
+    pygen_src_path = os.path.join(root_dir, "RISC-V", "riscv-dv", "pygen")
 
     # Set the PYTHONPATH to include the pygen source directory
     env = os.environ.copy()
@@ -103,7 +103,7 @@ def run_test_generation(seeds):
             "python3",
             riscv_dv_run,
             "--custom_target",
-            "uvm_env/custom_target/rv32i",
+            "RISC-V/custom_target/rv32i",
             "--test",
             test_name,
             "--target",

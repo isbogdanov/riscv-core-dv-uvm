@@ -109,7 +109,7 @@ def convert_spike_log_to_csv(spike_log_file, spike_csv_file):
 
     cmd = [
         "python3",
-        "uvm_env/riscv-dv/scripts/spike_log_to_trace_csv.py",
+        "RISC-V/riscv-dv/scripts/spike_log_to_trace_csv.py",
         "--log",
         spike_log_file,
         "--csv",
@@ -205,7 +205,7 @@ def compare_trace_csvs(spike_csv_file, rtl_csv_file):
 
     cmd = [
         "python3",
-        "uvm_env/riscv-dv/scripts/instr_trace_compare.py",
+        "RISC-V/riscv-dv/scripts/instr_trace_compare.py",
         "--csv_file_1",
         spike_csv_file,
         "--csv_file_2",

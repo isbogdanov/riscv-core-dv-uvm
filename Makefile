@@ -1,7 +1,7 @@
 # Makefile for the AMD-DV-Sprint project
 
 # --- Phony targets (don't represent files) ---
-.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim cov formal bug
+.PHONY: all compile elaborate smoke clean gen sim regress compile_asm spike_sim cov formal bug uvm_compile uvm_smoke uvm_regress
 
 # --- Environment Variables ---
 # Load environment variables from .env file if it exists.
@@ -69,6 +69,11 @@ compile_asm:
 	fi
 	@python3 scripts/compile_assembly.py
 
+# Convert compiled ELF files to Verilog memory format
+mem_convert:
+	@echo "--- Converting ELF files to memory format ---"
+	@python3 scripts/mem_convert.py
+
 # Run the reference Spike simulation to generate the golden trace log
 spike_sim: compile_asm
 	@echo "--- Running Spike reference simulation ---"
@@ -111,6 +116,67 @@ smoke: clean elaborate
 	@mkdir -p $(LOG_DIR)
 	@rm -rf "/tmp/$(USER)_dpi_*"
 	@$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi -cpppath $(HOST_CC_PATH) smoke_top -do "run -all; quit"
+
+# Compile UVM refactored implementation only
+uvm_compile:
+	@echo "--- Compiling UVM Classic implementation ---"
+	@$(VSIM) -c -do "do questa/scripts/compile_uvm_classic.do"
+
+# Run a smoke test on the new UVM refactored environment
+uvm_smoke: clean uvm_compile
+	@echo "--- Running UVM smoke test ---"
+	@$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi \
+		-cpppath $(HOST_CC_PATH) \
+		-do "run -all; quit" \
+		uvm_top \
+		+UVM_TESTNAME=riscv_base_test
+
+# Elaborate the UVM design for simulation
+uvm_elaborate: clean uvm_compile
+	@echo "--- Elaborating the UVM design ---"
+	@if [ "$(COV_ENABLE)" = "1" ]; then \
+		echo "Coverage is enabled"; \
+		$(VSIM) -c -do "vopt +acc +cover=sbfec -o uvm_regress_top -work work uvm_top; quit"; \
+	else \
+		echo "Coverage is disabled"; \
+		$(VSIM) -c -do "vopt +acc -o uvm_regress_top -work work uvm_top; quit"; \
+	fi
+
+# Run a UVM regression using a generated test program
+uvm_regress: uvm_elaborate gen compile_asm mem_convert spike_sim
+	@echo "--- Running UVM regression ---"; \
+	if [ ! -f "$(SEED_FILE)" ]; then \
+		echo "Seed file '$(SEED_FILE)' not found. Please run 'make gen' first."; \
+		exit 1; \
+	fi; \
+	SEEDS=$$(cat $(SEED_FILE)); \
+	for SEED in $$SEEDS; do \
+		echo "--- Running test for SEED=$$SEED ---"; \
+		MEM_FILE=$$(find out_*/asm_test -name "*_$$SEED.o.mem" -print -quit); \
+		SPIKE_LOG=$$(find out_*/spike_sim -name "*_$$SEED.log" -print -quit); \
+		if [ -z "$$MEM_FILE" ] || [ -z "$$SPIKE_LOG" ]; then \
+			echo "Error: Could not find files for SEED=$$SEED. Please check previous steps."; \
+			exit 1; \
+		fi; \
+		echo "Found memory file: $$MEM_FILE"; \
+		echo "Found spike log: $$SPIKE_LOG"; \
+		VSIM_CMD="$(VSIM) -c -sv_lib $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi "; \
+		DO_FILE_CONTENT=""; \
+		if [ "$(COV_ENABLE)" = "1" ]; then \
+			echo "Coverage enabled for simulation run."; \
+			mkdir -p $(COV_DIR); \
+			VSIM_CMD="$$VSIM_CMD -coverage"; \
+			DO_FILE_CONTENT="coverage save -onexit -testname uvm_test_$$SEED $(COV_DIR)/sim_$$SEED.ucdb; "; \
+		fi; \
+		DO_FILE_CONTENT="$$DO_FILE_CONTENT run -all; quit"; \
+		VSIM_CMD="$$VSIM_CMD -cpppath $(HOST_CC_PATH) uvm_regress_top -do \"$$DO_FILE_CONTENT\" +UVM_TESTNAME=riscv_base_test +MEM_FILE=$$MEM_FILE +SPIKE_LOG=$$SPIKE_LOG"; \
+		echo "Executing: $$VSIM_CMD"; \
+		eval "$$VSIM_CMD" | tee -a $(LOG_DIR)/uvm_run.log; \
+	done
+	@echo "--- Moving simulator logs ---"; \
+	for f in vsim_stacktrace.vstf tr_db.log transcript; do \
+		if [ -f "$$f" ]; then mv -f "$$f" "$(LOG_DIR)/"; fi; \
+	done
 
 # Run a debug simulation using a fixed RAM file
 debug_ram: clean elaborate
